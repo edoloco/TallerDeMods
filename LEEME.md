@@ -45,6 +45,10 @@ GitHub Actions compila, crea el Release con `TallerDeMods.apk` y el mensaje del 
 4. En Minecraft, crea o edita un mundo, entra a Complementos y activa los dos paquetes (el de comportamiento y el de recursos).
 5. Busca tus huevos de aparición en el inventario creativo, o usa el comando que aparece en "Mi addon" (por ejemplo `/summon custom:mi_criatura`).
 
+## Dibujar (editor de pixeles)
+
+Al crear un **bloque** u **objeto** aparece "🎨 Dibújalo tú": un lienzo de 16×16 con lápiz, rellenar, borrar, copiar color, espejo, deshacer y paleta. El dibujo se usa como textura en Minecraft. En "Mi addon" el botón ✏️ permite cambiar cualquier cosa ya creada.
+
 ## Reglas de magia (estilo MCreator, más sencillo)
 
 En la pantalla principal, **Crear una regla**: eliges *cuándo pasa algo* (alguien usa mi objeto, toca/rompe/pone mi bloque, mi criatura muere, la golpean o golpea, un jugador entra al mundo, cada cierto tiempo) y *qué pasa* (mensaje, dar un poder, dar un objeto, invocar una criatura, explosión, rayo, fuego, curar, hacer daño, subir al cielo, sonido, partículas).

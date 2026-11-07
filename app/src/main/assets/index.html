@@ -75,7 +75,8 @@ function dflt(){return{
  mob:{name:'',base:'zombie',size:'normal',str:'normal',spd:'normal',mode:'hostil',pw:[],egg:'1',wild:'',freq:'normal',c1:'#43a047',c2:'#212121',loot:[],ing:[]},
  block:{name:'',color:'#1e88e5',light:'0',hard:'normal',ing:[]},
  item:{name:'',kind:'espada',color:'#e53935',power:'normal',glow:'0',ing:[]},
- rule:{trig:'usar',subj:'',act:'mensaje',who:'player',val:'',amt:'medio',lvl:'suave',brk:'0',text:'¡Hola!',every:'10'}}}
+ rule:{trig:'usar',subj:'',act:'mensaje',who:'player',val:'',amt:'medio',lvl:'suave',brk:'0',text:'¡Hola!',every:'10'},
+ draw:{kind:'item',px:[],tool:'lapiz',col:'#e53935',mir:false,hist:[]}}}
 var S=dflt(),P={name:'Mi addon',mobs:[],blocks:[],items:[],rules:[]},scr='home',MSG='';
 try{var sv=localStorage.getItem('tallerP');if(sv)P=Object.assign(P,JSON.parse(sv))}catch(e){}
 function saveP(){try{localStorage.setItem('tallerP',JSON.stringify(P))}catch(e){}}
@@ -111,7 +112,7 @@ block:function(){return head('🧱 Bloque')
  +step('2. ¿De qué color?',swatches('block.color'))
  +step('3. ¿Brilla?',opts('block.light',[['0','🌑','No'],['7','💡','Un poco'],['15','☀️','Mucho']]))
  +step('4. ¿Qué tan duro es?',opts('block.hard',[['blando','🧽','Blando'],['normal','🪨','Normal'],['duro','⛓️','Duro'],['durisimo','💎','Durísimo']]))
- +RECIPE('block')+btn('','✅ ¡Crear bloque!','data-make="block"')},
+ +drawStep('block')+RECIPE('block')+btn('','✅ ¡Crear bloque!','data-make="block"')},
 item:function(){var k=S.item.kind,pw=k==='espada'?[['suave','🪶','Suave'],['normal','⚔️','Normal'],['fuerte','🔥','Fuerte'],['super','👑','Súper']]:k==='comida'?[['poco','🍬','Poquito'],['normal','🍖','Normal'],['mucho','🍗','Mucho']]:null;
  if(pw&&!pw.some(function(o){return o[0]===S.item.power}))S.item.power=pw[1][0];
  return head('⚔️ Objeto')
@@ -120,7 +121,7 @@ item:function(){var k=S.item.kind,pw=k==='espada'?[['suave','🪶','Suave'],['no
  +step('3. ¿De qué color?',swatches('item.color'))
  +(pw?step(k==='espada'?'4. ¿Qué tan fuerte?':'4. ¿Cuánta hambre quita?',opts('item.power',pw)):'')
  +step('5. ¿Brilla como encantado?',opts('item.glow',[['0','➖','Normal'],['1','✨','Brilla']]))
- +RECIPE('item')+btn('alt','✅ ¡Crear objeto!','data-make="item"')},
+ +drawStep('item')+RECIPE('item')+btn('alt','✅ ¡Crear objeto!','data-make="item"')},
 rule:function(){var r=S.rule,k=SUBJ[r.trig],h=head('🧠 Regla de magia')+'<p><small>Una regla dice: cuando pasa algo, entonces haz otra cosa.</small></p>'
  +step('1. ¿Cuándo pasa?',opts('rule.trig',TRIG));
  if(k){var sl=subjList(k);h+=step('2. ¿Con cuál?',sl.length?opts('rule.subj',sl):'<p>Primero crea '+{items:'un objeto',blocks:'un bloque',mobs:'una criatura'}[k]+' 🙂</p>')}
@@ -133,12 +134,22 @@ rule:function(){var r=S.rule,k=SUBJ[r.trig],h=head('🧠 Regla de magia')+'<p><s
  if(r.act==='explosion')h+=step('¿De qué tamaño?',opts('rule.amt',[['poco','🎈','Pequeña'],['medio','💣','Mediana'],['mucho','☄️','Grande']]))+step('¿Rompe bloques?',opts('rule.brk',[['0','🛡️','No'],['1','💥','Sí']]));
  h+=step('5. ¿A quién o dónde le pasa?',opts('rule.who',whoList()));
  return h+btn('pur','✅ ¡Crear regla!','data-make="rule"')},
-mine:function(){var L=function(key,e){return P[key].map(function(o,i){return'<div class="row"><span>'+e+' <b>'+esc(o.name)+'</b>'+(key==='mobs'?'<br><small>Comando:</small> <code>/summon '+NS+':'+o.id+'</code>':'')+'</span><button class="del" data-del="'+key+':'+i+'" aria-label="Borrar">🗑️</button></div>'}).join('')};
+draw:function(){var D=S.draw,T=[['lapiz','✏️','Lápiz'],['balde','🪣','Rellenar'],['goma','🧽','Borrar'],['gotero','💧','Copiar color']];
+ var b=function(a,e,t,on){return'<button type="button" class="opt'+(on?' on':'')+'" '+a+'><span class="e">'+e+'</span>'+t+'</button>'};
+ return'<div class="top"><button class="back" data-dback="1">⬅️</button><h1>🎨 Dibujar '+(D.kind==='block'?'bloque':'objeto')+'</h1></div>'
+ +'<div class="card"><canvas id="lienzo" width="320" height="320" style="-webkit-user-select:none;user-select:none;width:100%;max-width:360px;display:block;margin:0 auto;touch-action:none;border:3px solid #2b2118;border-radius:4px"></canvas>'
+ +'<p style="text-align:center;margin:8px 0 0"><small>Así se verá: </small><canvas id="mini" width="16" height="16" style="width:48px;height:48px;image-rendering:pixelated;vertical-align:middle;border:2px solid #2b2118"></canvas></p></div>'
+ +step('Herramienta','<div class="grid">'+T.map(function(t){return b('data-dt="'+t[0]+'"',t[1],t[2],D.tool===t[0])}).join('')+'</div>'
+  +'<div class="grid" style="margin-top:8px">'+b('data-dmir="1"','🦋','Espejo',D.mir)+b('data-dundo="1"','↩️','Deshacer',0)+b('data-dclear="1"','🗑️','Borrar todo',0)+'</div>')
+ +step('Color','<div class="grid" style="grid-template-columns:repeat(6,1fr)">'+PAL.map(function(c){return'<button type="button" class="sw'+(D.col===c?' on':'')+'" style="height:40px;background:'+c+'" data-dc="'+c+'" aria-label="Color"></button>'}).join('')+'</div>'
+  +'<p><small>¿Otro color?</small></p><input type="color" data-dcol="1" value="'+D.col+'">')
+ +btn('','✅ ¡Usar este dibujo!','data-dsave="1"')},
+mine:function(){var L=function(key,e){return P[key].map(function(o,i){return'<div class="row"><span>'+e+' <b>'+esc(o.name)+'</b>'+(key==='mobs'?'<br><small>Comando:</small> <code>/summon '+NS+':'+o.id+'</code>':'')+'</span><span style="display:flex;gap:6px;flex:none"><button class="del" data-edit="'+key+':'+i+'" aria-label="Cambiar">✏️</button><button class="del" data-del="'+key+':'+i+'" aria-label="Borrar">🗑️</button></span></div>'}).join('')};
  var R=P.rules.map(function(r,i){return'<div class="row"><span>🧠 '+ruleText(r)+'</span><button class="del" data-del="rules:'+i+'" aria-label="Borrar">🗑️</button></div>'}).join('');
  var all=L('mobs','🐲')+L('blocks','🧱')+L('items','⚔️')+R;
  return head('📦 Mi addon')+step('Nombre de mi addon',txt('P.name','Mi addon'))+'<div class="card">'+(all||'<p>Todavía no hay nada. ¡Crea tu primera cosa!</p>')+'</div>'+btn('blue','🚀 Enviar a Minecraft','data-send="1"')+'<p><small>Cuando se abra Minecraft, toca Importar. Después crea un mundo y en Complementos activa los dos paquetes de tu addon.</small></p>'}
 };
-function render(){var y=window.scrollY;$('app').innerHTML=(MSG?'<div class="toast">'+esc(MSG)+'</div>':'')+VIEW[scr]();window.scrollTo(0,y)}
+function render(){var y=window.scrollY;$('app').innerHTML=(MSG?'<div class="toast">'+esc(MSG)+'</div>':'')+VIEW[scr]();window.scrollTo(0,y);if(scr==='draw')drawInit()}
 function go(s){scr=s;MSG='';render();window.scrollTo(0,0)}
 function toast(m){MSG=m;render();window.scrollTo(0,0)}
 
@@ -261,11 +272,11 @@ async function build(){
   if(o.kind==='comida'){c['minecraft:food']={nutrition:{poco:3,normal:6,mucho:10}[o.power]||6,saturation_modifier:'normal',can_always_eat:false};c['minecraft:use_modifiers']={use_duration:1.6,movement_modifier:0.35}}
   if(o.glow==='1')c['minecraft:glint']=true;
   bp.file('items/'+o.id+'.json',JSON.stringify({format_version:'1.21.0','minecraft:item':{description:{identifier:NS+':'+o.id,menu_category:{category:o.kind==='espada'?'equipment':'items'}},components:c}},null,2));
-  it[o.id]={textures:'textures/items/'+o.id};rp.file('textures/items/'+o.id+'.png',icon(o.kind,o.color),{base64:true});recipe(bp,o)});
+  it[o.id]={textures:'textures/items/'+o.id};rp.file('textures/items/'+o.id+'.png',o.tex||icon(o.kind,o.color),{base64:true});recipe(bp,o)});
  if(P.items.length)rp.file('textures/item_texture.json',JSON.stringify({resource_pack_name:name,texture_name:'atlas.items',texture_data:it},null,2));
  P.blocks.forEach(function(o){
   bp.file('blocks/'+o.id+'.json',JSON.stringify({format_version:'1.21.0','minecraft:block':{description:{identifier:NS+':'+o.id,menu_category:{category:'construction'}},components:{'minecraft:destructible_by_mining':{seconds_to_destroy:{blando:1,normal:3,duro:10,durisimo:50}[o.hard]||3},'minecraft:light_emission':+o.light||0,'minecraft:material_instances':{'*':{texture:'b_'+o.id,render_method:'opaque'}}}}},null,2));
-  tt['b_'+o.id]={textures:'textures/blocks/'+o.id};rp.file('textures/blocks/'+o.id+'.png',icon('',o.color,1),{base64:true});lang+='tile.'+NS+':'+o.id+'.name='+o.name+'\n';recipe(bp,o)});
+  tt['b_'+o.id]={textures:'textures/blocks/'+o.id};rp.file('textures/blocks/'+o.id+'.png',o.tex||icon('',o.color,1),{base64:true});lang+='tile.'+NS+':'+o.id+'.name='+o.name+'\n';recipe(bp,o)});
  if(P.blocks.length)rp.file('textures/terrain_texture.json',JSON.stringify({resource_pack_name:name,texture_name:'atlas.terrain',padding:8,num_mip_levels:4,texture_data:tt},null,2));
  rp.file('texts/languages.json',JSON.stringify(['es_ES','en_US']));rp.file('texts/es_ES.lang',lang);rp.file('texts/en_US.lang',lang);
  return zip.generateAsync({type:'base64'})}
@@ -276,18 +287,63 @@ async function send(){
   if(window.Android){var r=Android.enviar(fn,b64);toast(r==='ok'?'🚀 ¡Abriendo Minecraft! Toca Importar.':'Algo falló: '+r)}
   else{var a=document.createElement('a');a.href='data:application/zip;base64,'+b64;a.download=fn+'.mcaddon';document.body.appendChild(a);a.click();a.remove();toast('Archivo guardado')}
  }catch(e){toast('Algo falló: '+(e&&e.message||e))}}
+// ---------- Editor de dibujo (16x16, estilo MCreator) ----------
+var PAL=['#000000','#3f3f3f','#7f7f7f','#bfbfbf','#ffffff','#5b3a1e','#8b5a2b','#c69c6d','#e53935','#ff8a80','#fb8c00','#fdd835','#fff59d','#43a047','#9ccc65','#1b5e20','#00acc1','#80deea','#1e88e5','#0d47a1','#8e24aa','#ce93d8','#d81b60','#f48fb1'];
+function autoIcon(kind){var o=S[kind];return kind==='item'?icon(o.kind,o.color):icon('',o.color,1)}
+function drawStep(kind){var o=S[kind],src=o.tex||autoIcon(kind);
+ return step('🎨 Dibújalo tú (opcional)','<div style="display:flex;gap:12px;align-items:center"><img src="data:image/png;base64,'+src+'" style="width:64px;height:64px;image-rendering:pixelated;border:3px solid #2b2118;border-radius:4px;background:#ddd">'
+  +'<small>'+(o.tex?'Usarás tu dibujo.':'Ahora usa el color elegido. Puedes dibujarlo pixel por pixel.')+'</small></div>'
+  +btn('pur',o.tex?'✏️ Cambiar mi dibujo':'🎨 Dibujar','data-draw="'+kind+'"')+(o.tex?'<button class="back" data-untex="'+kind+'">Quitar dibujo</button>':''))}
+function openDraw(kind){var D=S.draw;D.kind=kind;D.hist=[];D.px=[];for(var i=0;i<256;i++)D.px.push('');go('draw');
+ var im=new Image();im.onload=function(){var c=document.createElement('canvas');c.width=c.height=16;var x=c.getContext('2d');x.drawImage(im,0,0);var d=x.getImageData(0,0,16,16).data;
+  for(var i=0;i<256;i++)D.px[i]=d[i*4+3]<128?'':'#'+[0,1,2].map(function(k){return('0'+d[i*4+k].toString(16)).slice(-2)}).join('');if(scr==='draw')drawPaint()};
+ im.src='data:image/png;base64,'+(S[kind].tex||autoIcon(kind))}
+function drawPaint(){var c=$('lienzo'),m=$('mini');if(!c)return;var x=c.getContext('2d'),D=S.draw,z=20;
+ for(var i=0;i<256;i++){var cx=i%16,cy=i/16|0;if(D.px[i]){x.fillStyle=D.px[i];x.fillRect(cx*z,cy*z,z,z)}else{x.fillStyle='#fff';x.fillRect(cx*z,cy*z,z,z);x.fillStyle='#ddd';x.fillRect(cx*z,cy*z,z/2,z/2);x.fillRect(cx*z+z/2,cy*z+z/2,z/2,z/2)}}
+ x.strokeStyle='rgba(0,0,0,.15)';x.lineWidth=1;x.beginPath();for(var k=1;k<16;k++){x.moveTo(k*z+.5,0);x.lineTo(k*z+.5,320);x.moveTo(0,k*z+.5);x.lineTo(320,k*z+.5)}x.stroke();
+ if(D.mir){x.strokeStyle='rgba(142,68,173,.8)';x.lineWidth=2;x.beginPath();x.moveTo(160,0);x.lineTo(160,320);x.stroke()}
+ if(m){var y=m.getContext('2d');y.clearRect(0,0,16,16);for(i=0;i<256;i++)if(D.px[i]){y.fillStyle=D.px[i];y.fillRect(i%16,i/16|0,1,1)}}}
+function drawAt(cx,cy){var D=S.draw,i=cy*16+cx;
+ if(D.tool==='gotero'){if(D.px[i]){D.col=D.px[i];D.tool='lapiz';render()}return}
+ if(D.tool==='balde'){var from=D.px[i],to=D.col;if(from===to)return;var q=[i];while(q.length){var j=q.pop();if(D.px[j]!==from)continue;D.px[j]=to;var a=j%16,b2=j/16|0;if(a>0)q.push(j-1);if(a<15)q.push(j+1);if(b2>0)q.push(j-16);if(b2<15)q.push(j+16)}drawPaint();return}
+ var v=D.tool==='goma'?'':D.col;D.px[i]=v;if(D.mir)D.px[cy*16+15-cx]=v;drawPaint()}
+function drawInit(){var c=$('lienzo');if(!c)return;drawPaint();var down=false,last=-1;
+ function cell(e){var r=c.getBoundingClientRect();return[Math.max(0,Math.min(15,Math.floor((e.clientX-r.left)/r.width*16))),Math.max(0,Math.min(15,Math.floor((e.clientY-r.top)/r.height*16)))]}
+ c.addEventListener('pointerdown',function(e){e.preventDefault();down=true;try{c.setPointerCapture(e.pointerId)}catch(x){}var D=S.draw;D.hist.push(D.px.slice());if(D.hist.length>30)D.hist.shift();var p=cell(e);last=p[1]*16+p[0];drawAt(p[0],p[1])});
+ c.addEventListener('pointermove',function(e){if(!down)return;var t=S.draw.tool;if(t!=='lapiz'&&t!=='goma')return;var p=cell(e),k=p[1]*16+p[0];if(k!==last){last=k;drawAt(p[0],p[1])}});
+ ['pointerup','pointercancel','pointerleave'].forEach(function(n){c.addEventListener(n,function(){down=false})})}
+function drawSave(){var D=S.draw,c=document.createElement('canvas');c.width=c.height=16;var x=c.getContext('2d'),fondo=D.kind==='block'?S.block.color:'';
+ for(var i=0;i<256;i++){var v=D.px[i]||fondo;if(v){x.fillStyle=v;x.fillRect(i%16,i/16|0,1,1)}}
+ S[D.kind].tex=c.toDataURL('image/png').split(',')[1];var k=D.kind;scr=k;toast('🎨 ¡Dibujo listo! Ahora termina de crear tu '+(k==='block'?'bloque':'objeto')+'.')}
+document.addEventListener('click',function(e){var t=e.target.closest('button');if(!t)return;var d=t.dataset,D=S.draw;
+ if(d.draw)return openDraw(d.draw);
+ if(d.untex){delete S[d.untex].tex;return render()}
+ if(d.edit){var k=d.edit.split(':'),one={items:'item',blocks:'block',mobs:'mob'}[k[0]];S[one]=JSON.parse(JSON.stringify(P[k[0]][+k[1]]));return go(one)}
+ if(d.dback)return go(D.kind);
+ if(d.dt){D.tool=d.dt;return render()}
+ if(d.dc){D.col=d.dc;if(D.tool==='goma'||D.tool==='gotero')D.tool='lapiz';return render()}
+ if(d.dmir){D.mir=!D.mir;return render()}
+ if(d.dundo){if(D.hist.length)D.px=D.hist.pop();return drawPaint()}
+ if(d.dclear){D.hist.push(D.px.slice());D.px=D.px.map(function(){return''});return drawPaint()}
+ if(d.dsave)return drawSave()});
+document.addEventListener('change',function(e){if(e.target.dataset.dcol){S.draw.col=e.target.value;if(S.draw.tool!=='balde')S.draw.tool='lapiz';render()}});
+
 var UPD={};
-function updBox(){if(!window.Android||!Android.version)return'';var v='<p style="text-align:center"><small>Versión '+esc(Android.version())+'</small></p>';
+function updBox(){if(!window.Android||!Android.version)return'';var v='<p style="text-align:center"><small>Versión '+esc(Android.version())+'</small></p>'
+ +(UPD.estado==='hay'||UPD.estado==='bajando'?'':btn('alt',UPD.estado==='buscando'?'🔎 Buscando…':'🔄 Buscar actualizaciones','data-check="1"'))
+ +(UPD.estado==='ultima'?'<p style="text-align:center">✅ Ya tienes la última versión</p>':UPD.estado==='sinred'?'<p style="text-align:center">📶 No se pudo revisar. ¿Hay internet?</p>':'');
  if(UPD.estado==='hay')return'<div class="card" style="background:#fff3b0"><h2>🎁 ¡Hay una versión nueva! ('+esc(UPD.nueva)+')</h2>'+(UPD.notas?'<p><small>'+esc(UPD.notas).replace(/\n/g,'<br>')+'</small></p>':'')+btn('','⬇️ Actualizar ahora','data-upd="1"')+'</div>'+v;
  if(UPD.estado==='bajando')return'<div class="card"><h2>⬇️ Descargando… '+(UPD.pct||0)+'%</h2><small>No cierres la app.</small></div>'+v;
  if(UPD.estado==='permiso')return'<div class="card"><h2>🔓 Falta un permiso</h2><p><small>Activa “Permitir de esta fuente” y vuelve con la flecha atrás.</small></p></div>'+v;
  if(UPD.estado==='listo')return'<div class="card"><h2>✅ Descargada</h2><p><small>Toca “Actualizar” en la ventana de Android. Tus creaciones no se borran.</small></p></div>'+v;
  if(UPD.estado==='error')return'<div class="card"><h2>😕 No se pudo descargar</h2>'+btn('alt','🔄 Probar otra vez','data-upd="1"')+'</div>'+v;
  return v}
-window.onActualizacion=function(j){try{var r=JSON.parse(j);if(r.hay){UPD={estado:'hay',nueva:r.nueva,notas:r.notas};if(scr==='home')render()}}catch(e){}};
+window.onActualizacion=function(j){try{var r=JSON.parse(j),man=UPD.estado==='buscando';
+ if(r.hay)UPD={estado:'hay',nueva:r.nueva,notas:r.notas};else if(man)UPD={estado:r.error?'sinred':'ultima'};else return;if(scr==='home')render()}catch(e){}};
 window.onProgreso=function(p){UPD.pct=+p;if(scr==='home')render()};
 window.onDescarga=function(j){var r=JSON.parse(j);UPD.estado=r.ok?'listo':'error';if(scr==='home')render()};
 window.onPermiso=function(){UPD.estado='permiso';if(scr==='home')render()};
+document.addEventListener('click',function(e){var t=e.target.closest('button');if(!t||!t.dataset.check)return;if(UPD.estado==='buscando')return;UPD={estado:'buscando'};render();Android.buscarActualizacion()});
 document.addEventListener('click',function(e){var t=e.target.closest('button');if(!t||!t.dataset.upd)return;
  var r=Android.actualizar();if(r==='ok'){UPD.estado='bajando';UPD.pct=0}else{UPD.estado='error'}render()});
 render();

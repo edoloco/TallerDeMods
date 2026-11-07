@@ -81,6 +81,6 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           V="${{ steps.ver.outputs.version }}"
-          NOTAS="$(git log -1 --format=%B)"
+          NOTAS="$(git log -1 --format=%B | grep -vE "^(Co-Authored-By|Claude-Session):")"
           gh release create "v$V" TallerDeMods.apk --target "$GITHUB_SHA" \
             --title "Taller de Mods v$V" --notes "$NOTAS"

@@ -35,7 +35,16 @@ public class MainActivity extends Activity {
 
     @Override
     public void onBackPressed() {
-        finish();
+        web.evaluateJavascript(
+                "(function(){if(typeof scr!=='undefined'&&scr!=='home'){go('home');return 'atras';}return 'salir';})()",
+                new android.webkit.ValueCallback<String>() {
+                    @Override
+                    public void onReceiveValue(String valor) {
+                        if (valor == null || !valor.contains("atras")) {
+                            finish();
+                        }
+                    }
+                });
     }
 
     private class Bridge {

@@ -19,7 +19,7 @@ h1{margin:0;font-size:26px}
 .sw{height:52px;border:3px solid #2b2118;border-radius:6px}
 .sw.on{outline:4px solid #fff;box-shadow:0 0 0 3px #2b2118}
 .btn{display:block;width:100%;padding:16px;font:inherit;font-weight:700;font-size:20px;color:#fff;background:#4caf3a;border:4px solid #2b2118;border-radius:6px;box-shadow:0 5px 0 #2b2118;margin:12px 0}
-.btn.alt{background:#e8870e}.btn.blue{background:#2f7fe0}
+.btn.alt{background:#e8870e}.btn.pur{background:#8e44ad}.btn.blue{background:#2f7fe0}
 input[type=text]{width:100%;padding:12px;font:inherit;border:3px solid #2b2118;border-radius:6px}
 input[type=color]{width:100%;height:54px;border:3px solid #2b2118;border-radius:6px;padding:2px;background:#fff}
 .back{padding:8px 12px;font:inherit;font-weight:700;border:3px solid #2b2118;background:#fff;border-radius:6px}
@@ -51,11 +51,32 @@ var LOOT=[['diamond','💎','Diamante'],['emerald','🟢','Esmeralda'],['gold_in
 var PW=[['fuego','🔥','No se quema'],['veneno','☠️','Envenena'],['wither','🖤','Marchita'],['bolafuego','☄️','Lanza fuego'],['calavera','💀','Lanza calaveras'],['nieve','❄️','Lanza nieve'],['aura','🌀','Aura lenta'],['jefe','👑','Barra de jefe'],['trepar','🧗','Trepa paredes'],['puertas','🚪','Rompe puertas'],['roca','🛡️','No lo empujan']];
 var WILD=[['','🚫','No aparece solo'],['noche','🌙','Mundo, de noche'],['dia','☀️','Mundo, de día'],['desierto','🏜️','Desierto'],['nieve','🌨️','Zona de nieve'],['nether','🌋','Nether'],['end','🟣','El End']];
 
+var TRIG=[['usar','🪄','Alguien usa mi objeto'],['tocar','👆','Alguien toca mi bloque'],['romper','⛏️','Alguien rompe mi bloque'],['poner','🧱','Alguien pone mi bloque'],['muere','💀','Mi criatura muere'],['golpeada','🤕','Mi criatura es golpeada'],['golpea','👊','Mi criatura golpea'],['entra','👋','Un jugador entra al mundo'],['tiempo','⏰','Cada cierto tiempo']];
+var SUBJ={usar:'items',tocar:'blocks',romper:'blocks',poner:'blocks',muere:'mobs',golpeada:'mobs',golpea:'mobs'};
+var ACT=[['mensaje','💬','Decir un mensaje'],['efecto','✨','Dar un poder'],['dar','🎁','Dar un objeto'],['invocar','🐲','Invocar una criatura'],['explosion','💥','Explosión'],['rayo','⚡','Lanzar un rayo'],['fuego','🔥','Prender fuego'],['curar','❤️','Curar'],['dano','💔','Hacer daño'],['subir','🚀','Subir al cielo'],['sonido','🔊','Sonido'],['particula','🎆','Partículas']];
+var EFF=[['speed','💨','Velocidad'],['jump_boost','🦘','Saltar alto'],['strength','💪','Fuerza'],['regeneration','💖','Regenerar'],['fire_resistance','🧯','No quemarse'],['invisibility','👻','Invisible'],['night_vision','🌙','Ver de noche'],['slow_falling','🪶','Caer lento'],['resistance','🛡️','Resistencia'],['poison','☠️','Veneno'],['wither','🖤','Wither'],['slowness','🐌','Lentitud'],['weakness','😵','Debilidad'],['blindness','🕶️','Ceguera'],['levitation','🎈','Levitar'],['glowing','💡','Brillar']];
+var SND=[['random.levelup','🎉','Subir de nivel'],['random.explode','💥','Explosión'],['mob.enderdragon.growl','🐉','Rugido'],['random.anvil_land','🔨','Yunque'],['note.bell','🔔','Campana']];
+var PAR=[['minecraft:heart_particle','💕','Corazones'],['minecraft:totem_particle','✨','Tótem'],['minecraft:huge_explosion_emitter','💥','Explosión'],['minecraft:villager_happy','🌟','Estrellitas']];
+var AMT=[['poco','⏳','Poquito'],['medio','⌛','Normal'],['mucho','🕰️','Mucho']];
+var SCRIPT_VER='1.19.0';
+function nm(id){var f=null;['items','blocks','mobs'].forEach(function(k){P[k].forEach(function(o){if(NS+':'+o.id===id)f=o.name})});return f||id.replace('minecraft:','')}
+function subjList(k){var e={items:'⚔️',blocks:'🧱',mobs:'🐲'}[k];return P[k].map(function(o){return[NS+':'+o.id,e,o.name]})}
+function whoList(){var r=S.rule,mobOk=r.trig==='golpeada'||r.trig==='golpea';
+ var need={mensaje:['player'],dar:['player'],efecto:['player','mob'],fuego:['player','mob'],curar:['player','mob'],dano:['player','mob'],subir:['player','mob']}[r.act]||['player','mob','place'];
+ var ok=need.filter(function(w){return w!=='mob'||mobOk});if(!ok.length)ok=['place'];if(ok.indexOf(r.who)<0)r.who=ok[0];
+ return[['player','👤','El jugador'],['mob','🐲','La criatura'],['place','📍','El lugar']].filter(function(x){return ok.indexOf(x[0])>=0})}
+function valList(a){
+ if(a==='efecto')return EFF;if(a==='sonido')return SND;if(a==='particula')return PAR;
+ if(a==='dar')return LOOT.map(function(x){return['minecraft:'+x[0],x[1],x[2]]}).concat(subjList('items'),subjList('blocks'));
+ if(a==='invocar')return CR.filter(function(x){return x[0]!=='steve'&&x[0]!=='wither_storm'}).map(function(x){return['minecraft:'+x[0],x[1],x[2]]}).concat(subjList('mobs'));return null}
+var VALDEF={efecto:'speed',dar:'minecraft:diamond',invocar:'minecraft:zombie',sonido:'random.levelup',particula:'minecraft:heart_particle'};
+function ruleText(r){var tr=TRIG.filter(function(x){return x[0]===r.trig})[0],ac=ACT.filter(function(x){return x[0]===r.act})[0];return tr[1]+' '+tr[2]+(r.subj?' ('+esc(nm(r.subj))+')':'')+' → '+ac[1]+' '+ac[2]}
 function dflt(){return{
  mob:{name:'',base:'zombie',size:'normal',str:'normal',spd:'normal',mode:'hostil',pw:[],egg:'1',wild:'',freq:'normal',c1:'#43a047',c2:'#212121',loot:[],ing:[]},
  block:{name:'',color:'#1e88e5',light:'0',hard:'normal',ing:[]},
- item:{name:'',kind:'espada',color:'#e53935',power:'normal',glow:'0',ing:[]}}}
-var S=dflt(),P={name:'Mi addon',mobs:[],blocks:[],items:[]},scr='home',MSG='';
+ item:{name:'',kind:'espada',color:'#e53935',power:'normal',glow:'0',ing:[]},
+ rule:{trig:'usar',subj:'',act:'mensaje',who:'player',val:'',amt:'medio',lvl:'suave',brk:'0',text:'¡Hola!',every:'10'}}}
+var S=dflt(),P={name:'Mi addon',mobs:[],blocks:[],items:[],rules:[]},scr='home',MSG='';
 try{var sv=localStorage.getItem('tallerP');if(sv)P=Object.assign(P,JSON.parse(sv))}catch(e){}
 function saveP(){try{localStorage.setItem('tallerP',JSON.stringify(P))}catch(e){}}
 
@@ -72,7 +93,7 @@ function btn(c,t,a){return'<button class="btn '+c+'" '+a+'>'+t+'</button>'}
 var RECIPE=function(k){return step('¿Cómo se fabrica? (opcional, hasta 3 cosas)',opts(k+'.ing',ING,1,3))};
 
 var VIEW={
-home:function(){var n=P.mobs.length+P.blocks.length+P.items.length;return'<h1>⛏️ Taller de Mods</h1><p>¡Crea tus propias cosas para Minecraft!</p>'+btn('','🐲 Crear una criatura','data-go="mob"')+btn('blue','🧱 Crear un bloque','data-go="block"')+btn('alt','⚔️ Crear un objeto','data-go="item"')+btn('','📦 Mi addon ('+n+' cosas)','data-go="mine"')},
+home:function(){var n=P.mobs.length+P.blocks.length+P.items.length+P.rules.length;return'<h1>⛏️ Taller de Mods</h1><p>¡Crea tus propias cosas para Minecraft!</p>'+btn('','🐲 Crear una criatura','data-go="mob"')+btn('blue','🧱 Crear un bloque','data-go="block"')+btn('alt','⚔️ Crear un objeto','data-go="item"')+btn('pur','🧠 Crear una regla (magia)','data-go="rule"')+btn('','📦 Mi addon ('+n+' cosas)','data-go="mine"')},
 mob:function(){return head('🐲 Criatura')
  +step('1. ¿Cómo se llama?',txt('mob.name','Ej: Dragón de lava'))
  +step('2. ¿Cómo se ve?',opts('mob.base',CR))
@@ -100,8 +121,21 @@ item:function(){var k=S.item.kind,pw=k==='espada'?[['suave','🪶','Suave'],['no
  +(pw?step(k==='espada'?'4. ¿Qué tan fuerte?':'4. ¿Cuánta hambre quita?',opts('item.power',pw)):'')
  +step('5. ¿Brilla como encantado?',opts('item.glow',[['0','➖','Normal'],['1','✨','Brilla']]))
  +RECIPE('item')+btn('alt','✅ ¡Crear objeto!','data-make="item"')},
+rule:function(){var r=S.rule,k=SUBJ[r.trig],h=head('🧠 Regla de magia')+'<p><small>Una regla dice: cuando pasa algo, entonces haz otra cosa.</small></p>'
+ +step('1. ¿Cuándo pasa?',opts('rule.trig',TRIG));
+ if(k){var sl=subjList(k);h+=step('2. ¿Con cuál?',sl.length?opts('rule.subj',sl):'<p>Primero crea '+{items:'un objeto',blocks:'un bloque',mobs:'una criatura'}[k]+' 🙂</p>')}
+ if(r.trig==='tiempo')h+=step('2. ¿Cada cuánto?',opts('rule.every',[['5','⏱️','5 segundos'],['10','⏱️','10 segundos'],['30','⏱️','30 segundos'],['60','⏱️','1 minuto']]));
+ h+=step('3. ¿Qué pasa entonces?',opts('rule.act',ACT));
+ var vl=valList(r.act);
+ if(r.act==='mensaje')h+=step('4. ¿Qué dice?',txt('rule.text','Escribe el mensaje'));
+ if(vl)h+=step('4. ¿Cuál?',opts('rule.val',vl));
+ if(r.act==='efecto')h+=step('¿Cuánto dura?',opts('rule.amt',AMT))+step('¿Qué tan fuerte?',opts('rule.lvl',[['suave','🙂','Suave'],['fuerte','💪','Fuerte']]));
+ if(r.act==='explosion')h+=step('¿De qué tamaño?',opts('rule.amt',[['poco','🎈','Pequeña'],['medio','💣','Mediana'],['mucho','☄️','Grande']]))+step('¿Rompe bloques?',opts('rule.brk',[['0','🛡️','No'],['1','💥','Sí']]));
+ h+=step('5. ¿A quién o dónde le pasa?',opts('rule.who',whoList()));
+ return h+btn('pur','✅ ¡Crear regla!','data-make="rule"')},
 mine:function(){var L=function(key,e){return P[key].map(function(o,i){return'<div class="row"><span>'+e+' <b>'+esc(o.name)+'</b>'+(key==='mobs'?'<br><small>Comando:</small> <code>/summon '+NS+':'+o.id+'</code>':'')+'</span><button class="del" data-del="'+key+':'+i+'" aria-label="Borrar">🗑️</button></div>'}).join('')};
- var all=L('mobs','🐲')+L('blocks','🧱')+L('items','⚔️');
+ var R=P.rules.map(function(r,i){return'<div class="row"><span>🧠 '+ruleText(r)+'</span><button class="del" data-del="rules:'+i+'" aria-label="Borrar">🗑️</button></div>'}).join('');
+ var all=L('mobs','🐲')+L('blocks','🧱')+L('items','⚔️')+R;
  return head('📦 Mi addon')+step('Nombre de mi addon',txt('P.name','Mi addon'))+'<div class="card">'+(all||'<p>Todavía no hay nada. ¡Crea tu primera cosa!</p>')+'</div>'+btn('blue','🚀 Enviar a Minecraft','data-send="1"')+'<p><small>Cuando se abra Minecraft, toca Importar. Después crea un mundo y en Complementos activa los dos paquetes de tu addon.</small></p>'}
 };
 function render(){var y=window.scrollY;$('app').innerHTML=(MSG?'<div class="toast">'+esc(MSG)+'</div>':'')+VIEW[scr]();window.scrollTo(0,y)}
@@ -112,6 +146,8 @@ document.addEventListener('click',function(e){var t=e.target.closest('button');i
  if(d.go)return go(d.go);
  if(d.p){var g=d.p.split('.'),o=S[g[0]];
   if(d.m){var a=o[g[1]],i=a.indexOf(d.v);if(i>=0)a.splice(i,1);else if(a.length<+d.m)a.push(d.v)}else o[g[1]]=d.v;
+  if(d.p==='rule.trig')S.rule.subj='';
+  if(d.p==='rule.act')S.rule.val=VALDEF[d.v]||'';
   if(d.p==='mob.base'&&d.v==='wither_storm'){var m=S.mob;if(!m.name)m.name='Wither Storm';m.size='gigante';m.str='jefe';m.pw=['fuego','calavera','jefe','roca'];m.c1='#2a2a3a';m.c2='#8c3be8'}
   return render()}
  if(d.make)return make(d.make);
@@ -120,6 +156,7 @@ document.addEventListener('click',function(e){var t=e.target.closest('button');i
 document.addEventListener('input',function(e){var i=e.target.dataset.i;if(!i)return;var g=i.split('.');obj(g)[g[1]]=e.target.value;if(g[0]==='P')saveP()});
 
 function make(kind){var o=JSON.parse(JSON.stringify(S[kind]));
+ if(kind==='rule'){if(SUBJ[o.trig]&&!o.subj)return toast('Elige con cuál cosa pasa 👆');if(o.act==='mensaje'&&!o.text.trim())return toast('Escribe qué dice el mensaje ✏️');o.id='regla'+Date.now();P.rules.push(o);saveP();S.rule=dflt().rule;scr='mine';return toast('🧠 ¡Regla creada!')}
  if(!o.name.trim()){toast('¡Ponle un nombre primero! ✏️');return}
  o.name=o.name.trim();o.id=slug(o.name,kind);
  var L=P[kind+'s'];for(var i=L.length-1;i>=0;i--)if(L[i].id===o.id)L.splice(i,1);
@@ -161,10 +198,54 @@ function spawnRule(id,w,freq,pop){var c={'minecraft:spawns_on_surface':{},'minec
  return{format_version:'1.8.0','minecraft:spawn_rules':{description:{identifier:NS+':'+id,population_control:pop},conditions:[c]}}}
 function recipe(bp,o,res){if(!o.ing||!o.ing.length)return;bp.file('recipes/'+o.id+'.json',JSON.stringify({format_version:'1.20.10','minecraft:recipe_shapeless':{description:{identifier:NS+':receta_'+o.id},tags:['crafting_table'],ingredients:o.ing.map(function(i){return{item:'minecraft:'+i}}),result:{item:NS+':'+o.id,count:1}}},null,2))}
 
+var DEC={poco:5,medio:15,mucho:60};
+function ruleCmd(r){var v=r.val,sec=DEC[r.amt]||15,lv=r.lvl==='fuerte'?2:0;
+ switch(r.act){
+  case 'mensaje':return{k:'c',c:'tellraw @s '+JSON.stringify({rawtext:[{text:r.text||'Hola'}]})};
+  case 'efecto':return{k:'c',c:'effect @s '+v+' '+sec+' '+lv+' true'};
+  case 'dar':return{k:'c',c:'give @s '+v+' 1'};
+  case 'invocar':return{k:'c',c:'summon '+v+' ~ ~ ~'};
+  case 'explosion':return{k:'x',r:{poco:2,medio:4,mucho:7}[r.amt]||4,b:r.brk==='1'};
+  case 'rayo':return{k:'c',c:'summon lightning_bolt ~ ~ ~'};
+  case 'fuego':return{k:'f'};
+  case 'curar':return{k:'c',c:'effect @s instant_health 1 2 true'};
+  case 'dano':return{k:'c',c:'damage @s 6'};
+  case 'subir':return{k:'c',c:'tp @s ~ ~12 ~'};
+  case 'sonido':return{k:'c',c:'playsound '+v+' @a ~ ~ ~'};
+  default:return{k:'c',c:'particle '+v+' ~ ~1 ~'}}}
+function RUNTIME(world,system,R){
+ function isP(e){return !!e&&e.typeId==='minecraft:player'}
+ function go(r,c){
+  var who=r.w==='mob'?c.mob:r.w==='player'?c.player:null;
+  if(r.w!=='place'&&!who)return;
+  if(r.l&&system.currentTick-r.l<10)return;
+  r.l=system.currentTick;
+  try{
+   if(r.k==='x'){var l=who?who.location:c.loc,d=who?who.dimension:c.dim;d.createExplosion(l,r.r,{breaksBlocks:!!r.b});return}
+   if(r.k==='f'){who.setOnFire(8,true);return}
+   if(who)who.runCommand(r.c);
+   else c.dim.runCommand('execute positioned '+c.loc.x+' '+c.loc.y+' '+c.loc.z+' run '+r.c)
+  }catch(e){}
+ }
+ function each(t,s,c){R.forEach(function(r){if(r.t===t&&(!r.s||r.s===s))go(r,c)})}
+ world.afterEvents.itemUse.subscribe(function(e){var p=e.source;each('usar',e.itemStack.typeId,{player:p,dim:p.dimension,loc:p.location})});
+ world.afterEvents.playerInteractWithBlock.subscribe(function(e){if(e.isFirstEvent===false)return;each('tocar',e.block.typeId,{player:e.player,dim:e.block.dimension,loc:e.block.location})});
+ world.afterEvents.playerBreakBlock.subscribe(function(e){each('romper',e.brokenBlockPermutation.type.id,{player:e.player,dim:e.block.dimension,loc:e.block.location})});
+ world.afterEvents.playerPlaceBlock.subscribe(function(e){each('poner',e.block.typeId,{player:e.player,dim:e.block.dimension,loc:e.block.location})});
+ world.afterEvents.entityDie.subscribe(function(e){var k=e.damageSource&&e.damageSource.damagingEntity,m=e.deadEntity;each('muere',m.typeId,{player:isP(k)?k:null,dim:m.dimension,loc:m.location})});
+ world.afterEvents.entityHurt.subscribe(function(e){var k=e.damageSource&&e.damageSource.damagingEntity,m=e.hurtEntity;each('golpeada',m.typeId,{mob:m,player:isP(k)?k:null,dim:m.dimension,loc:m.location})});
+ world.afterEvents.entityHitEntity.subscribe(function(e){var m=e.damagingEntity,h=e.hitEntity;each('golpea',m.typeId,{mob:m,player:isP(h)?h:null,dim:m.dimension,loc:m.location})});
+ world.afterEvents.playerSpawn.subscribe(function(e){if(e.initialSpawn){var p=e.player;each('entra','',{player:p,dim:p.dimension,loc:p.location})}});
+ var n=0;system.runInterval(function(){n++;R.forEach(function(r){if(r.t==='tiempo'&&n%r.e===0)world.getAllPlayers().forEach(function(p){go(r,{player:p,dim:p.dimension,loc:p.location})})})},20);
+}
+function genScript(){var rs=P.rules.map(function(r){var o=ruleCmd(r);return{t:r.trig,s:r.subj,w:r.who,e:+r.every||10,k:o.k,c:o.c,r:o.r,b:o.b}});
+ return'import { world, system } from "@minecraft/server";\nvar R = '+JSON.stringify(rs)+';\n('+RUNTIME.toString()+')(world, system, R);\n'}
 async function build(){
  var name=P.name.trim()||'Mi addon',zip=new JSZip(),bp=zip.folder(name+' BP'),rp=zip.folder(name+' RP'),bH=uuid(),rH=uuid(),lang='';
  var mf=function(n,d,u,t,dep){return{format_version:2,header:{name:name+n,description:d,uuid:u,version:[1,0,0],min_engine_version:[1,21,0]},modules:[{type:t,uuid:uuid(),version:[1,0,0]}],dependencies:[{uuid:dep,version:[1,0,0]}]}};
- bp.file('manifest.json',JSON.stringify(mf(' BP','Comportamiento',bH,'data',rH),null,2));
+ var bm=mf(' BP','Comportamiento',bH,'data',rH);
+ if(P.rules.length){bm.modules.push({type:'script',language:'javascript',uuid:uuid(),version:[1,0,0],entry:'scripts/main.js'});bm.dependencies.push({module_name:'@minecraft/server',version:SCRIPT_VER});bp.file('scripts/main.js',genScript())}
+ bp.file('manifest.json',JSON.stringify(bm,null,2));
  rp.file('manifest.json',JSON.stringify(mf(' RP','Recursos',rH,'resources',bH),null,2));
  P.mobs.forEach(function(o){var m=mobParams(o),full=NS+':'+m.id,b=MOBS.filter(function(x){return x.k===m.base})[0]||MOBS[0],d=JSON.parse(JSON.stringify(b.d));
   d.identifier=full;d.spawn_egg={base_color:o.c1.toUpperCase(),overlay_color:o.c2.toUpperCase()};if(m.base==='steve')d.textures={default:'textures/entity/steve'};
@@ -189,7 +270,7 @@ async function build(){
  return zip.generateAsync({type:'base64'})}
 
 async function send(){
- if(!(P.mobs.length+P.blocks.length+P.items.length))return toast('Primero crea algo ✨');
+ if(!(P.mobs.length+P.blocks.length+P.items.length+P.rules.length))return toast('Primero crea algo ✨');
  try{var b64=await build(),fn=slug(P.name,'addon');
   if(window.Android){var r=Android.enviar(fn,b64);toast(r==='ok'?'🚀 ¡Abriendo Minecraft! Toca Importar.':'Algo falló: '+r)}
   else{var a=document.createElement('a');a.href='data:application/zip;base64,'+b64;a.download=fn+'.mcaddon';document.body.appendChild(a);a.click();a.remove();toast('Archivo guardado')}

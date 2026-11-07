@@ -2,6 +2,12 @@ plugins {
     id 'com.android.application'
 }
 
+// La versión viene de la etiqueta del release (v1.2.3 -> versionName 1.2.3, versionCode 10203).
+// Se pasa desde GitHub Actions con -PappVersion=1.2.3
+def appVersion = (project.findProperty('appVersion') ?: '1.0.0').toString()
+def partes = (appVersion.tokenize('.-') + ['0', '0', '0']).take(3).collect { it.isInteger() ? it.toInteger() : 0 }
+def appVersionCode = partes[0] * 10000 + partes[1] * 100 + partes[2]
+
 android {
     namespace 'com.taller.mods'
     compileSdk 34
@@ -10,8 +16,28 @@ android {
         applicationId "com.taller.mods"
         minSdk 24
         targetSdk 34
-        versionCode 1
-        versionName "1.0"
+        versionCode appVersionCode
+        versionName appVersion
+    }
+
+    // Siempre la MISMA firma: si cambia, Android no deja instalar la actualización encima.
+    signingConfigs {
+        taller {
+            storeFile rootProject.file('keystore/tallerdemods.jks')
+            storePassword System.getenv('KEYSTORE_PASSWORD') ?: 'tallerdemods'
+            keyAlias 'tallerdemods'
+            keyPassword System.getenv('KEYSTORE_PASSWORD') ?: 'tallerdemods'
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            signingConfig signingConfigs.taller
+        }
+        debug {
+            signingConfig signingConfigs.taller
+        }
     }
 
     compileOptions {

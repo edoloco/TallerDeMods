@@ -1,9 +1,15 @@
 name: Crear APK
 
+# - Cada push a main: compila y deja la APK en "Artifacts" para probar.
+# - Cada etiqueta vX.Y.Z: compila y publica un Release; la app lo detecta y se actualiza sola.
 on:
   push:
     branches: [main, master]
+    tags: ['v*']
   workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   build:
@@ -20,10 +26,33 @@ jobs:
         with:
           gradle-version: '8.7'
 
+      - name: Calcular versión
+        id: ver
+        run: |
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+            V="${GITHUB_REF_NAME#v}"
+          else
+            V="0.0.${GITHUB_RUN_NUMBER}"
+          fi
+          echo "version=$V" >> "$GITHUB_OUTPUT"
+
       - name: Compilar la app
-        run: gradle assembleDebug --no-daemon
+        run: gradle assembleRelease --no-daemon -PappVersion=${{ steps.ver.outputs.version }}
+
+      - name: Nombrar APK
+        run: cp app/build/outputs/apk/release/app-release.apk TallerDeMods.apk
 
       - uses: actions/upload-artifact@v4
         with:
           name: TallerDeMods-APK
-          path: app/build/outputs/apk/debug/*.apk
+          path: TallerDeMods.apk
+
+      - name: Publicar release
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          NOTAS="$(git tag -l --format='%(contents)' "$GITHUB_REF_NAME")"
+          [ -z "$NOTAS" ] && NOTAS="Versión ${GITHUB_REF_NAME#v} de Taller de Mods."
+          gh release create "$GITHUB_REF_NAME" TallerDeMods.apk \
+            --title "Taller de Mods ${GITHUB_REF_NAME}" --notes "$NOTAS"

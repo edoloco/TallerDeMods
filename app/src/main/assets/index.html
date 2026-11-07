@@ -93,7 +93,7 @@ function btn(c,t,a){return'<button class="btn '+c+'" '+a+'>'+t+'</button>'}
 var RECIPE=function(k){return step('¿Cómo se fabrica? (opcional, hasta 3 cosas)',opts(k+'.ing',ING,1,3))};
 
 var VIEW={
-home:function(){var n=P.mobs.length+P.blocks.length+P.items.length+P.rules.length;return'<h1>⛏️ Taller de Mods</h1><p>¡Crea tus propias cosas para Minecraft!</p>'+btn('','🐲 Crear una criatura','data-go="mob"')+btn('blue','🧱 Crear un bloque','data-go="block"')+btn('alt','⚔️ Crear un objeto','data-go="item"')+btn('pur','🧠 Crear una regla (magia)','data-go="rule"')+btn('','📦 Mi addon ('+n+' cosas)','data-go="mine"')},
+home:function(){var n=P.mobs.length+P.blocks.length+P.items.length+P.rules.length;return'<h1>⛏️ Taller de Mods</h1><p>¡Crea tus propias cosas para Minecraft!</p>'+btn('','🐲 Crear una criatura','data-go="mob"')+btn('blue','🧱 Crear un bloque','data-go="block"')+btn('alt','⚔️ Crear un objeto','data-go="item"')+btn('pur','🧠 Crear una regla (magia)','data-go="rule"')+btn('','📦 Mi addon ('+n+' cosas)','data-go="mine"')+updBox()},
 mob:function(){return head('🐲 Criatura')
  +step('1. ¿Cómo se llama?',txt('mob.name','Ej: Dragón de lava'))
  +step('2. ¿Cómo se ve?',opts('mob.base',CR))
@@ -241,12 +241,13 @@ function RUNTIME(world,system,R){
 function genScript(){var rs=P.rules.map(function(r){var o=ruleCmd(r);return{t:r.trig,s:r.subj,w:r.who,e:+r.every||10,k:o.k,c:o.c,r:o.r,b:o.b}});
  return'import { world, system } from "@minecraft/server";\nvar R = '+JSON.stringify(rs)+';\n('+RUNTIME.toString()+')(world, system, R);\n'}
 async function build(){
- var name=P.name.trim()||'Mi addon',zip=new JSZip(),bp=zip.folder(name+' BP'),rp=zip.folder(name+' RP'),bH=uuid(),rH=uuid(),lang='';
- var mf=function(n,d,u,t,dep){return{format_version:2,header:{name:name+n,description:d,uuid:u,version:[1,0,0],min_engine_version:[1,21,0]},modules:[{type:t,uuid:uuid(),version:[1,0,0]}],dependencies:[{uuid:dep,version:[1,0,0]}]}};
- var bm=mf(' BP','Comportamiento',bH,'data',rH);
- if(P.rules.length){bm.modules.push({type:'script',language:'javascript',uuid:uuid(),version:[1,0,0],entry:'scripts/main.js'});bm.dependencies.push({module_name:'@minecraft/server',version:SCRIPT_VER});bp.file('scripts/main.js',genScript())}
+ if(!P.pk)P.pk={b:uuid(),r:uuid(),bm:uuid(),rm:uuid(),sm:uuid(),v:0};P.pk.v++;saveP();var VER=[1,0,P.pk.v];
+ var name=P.name.trim()||'Mi addon',zip=new JSZip(),bp=zip.folder(name+' BP'),rp=zip.folder(name+' RP'),bH=P.pk.b,rH=P.pk.r,lang='';
+ var mf=function(n,d,u,t,dep,mu){return{format_version:2,header:{name:name+n,description:d,uuid:u,version:VER,min_engine_version:[1,21,0]},modules:[{type:t,uuid:mu,version:VER}],dependencies:[{uuid:dep,version:VER}]}};
+ var bm=mf(' BP','Comportamiento',bH,'data',rH,P.pk.bm);
+ if(P.rules.length){bm.modules.push({type:'script',language:'javascript',uuid:P.pk.sm,version:VER,entry:'scripts/main.js'});bm.dependencies.push({module_name:'@minecraft/server',version:SCRIPT_VER});bp.file('scripts/main.js',genScript())}
  bp.file('manifest.json',JSON.stringify(bm,null,2));
- rp.file('manifest.json',JSON.stringify(mf(' RP','Recursos',rH,'resources',bH),null,2));
+ rp.file('manifest.json',JSON.stringify(mf(' RP','Recursos',rH,'resources',bH,P.pk.rm),null,2));
  P.mobs.forEach(function(o){var m=mobParams(o),full=NS+':'+m.id,b=MOBS.filter(function(x){return x.k===m.base})[0]||MOBS[0],d=JSON.parse(JSON.stringify(b.d));
   d.identifier=full;d.spawn_egg={base_color:o.c1.toUpperCase(),overlay_color:o.c2.toUpperCase()};if(m.base==='steve')d.textures={default:'textures/entity/steve'};
   bp.file('entities/'+m.id+'.json',JSON.stringify(mobEnt(m,o.egg!=='0'),null,2));
@@ -275,7 +276,22 @@ async function send(){
   if(window.Android){var r=Android.enviar(fn,b64);toast(r==='ok'?'🚀 ¡Abriendo Minecraft! Toca Importar.':'Algo falló: '+r)}
   else{var a=document.createElement('a');a.href='data:application/zip;base64,'+b64;a.download=fn+'.mcaddon';document.body.appendChild(a);a.click();a.remove();toast('Archivo guardado')}
  }catch(e){toast('Algo falló: '+(e&&e.message||e))}}
+var UPD={};
+function updBox(){if(!window.Android||!Android.version)return'';var v='<p style="text-align:center"><small>Versión '+esc(Android.version())+'</small></p>';
+ if(UPD.estado==='hay')return'<div class="card" style="background:#fff3b0"><h2>🎁 ¡Hay una versión nueva! ('+esc(UPD.nueva)+')</h2>'+(UPD.notas?'<p><small>'+esc(UPD.notas).replace(/\n/g,'<br>')+'</small></p>':'')+btn('','⬇️ Actualizar ahora','data-upd="1"')+'</div>'+v;
+ if(UPD.estado==='bajando')return'<div class="card"><h2>⬇️ Descargando… '+(UPD.pct||0)+'%</h2><small>No cierres la app.</small></div>'+v;
+ if(UPD.estado==='permiso')return'<div class="card"><h2>🔓 Falta un permiso</h2><p><small>Activa “Permitir de esta fuente” y vuelve con la flecha atrás.</small></p></div>'+v;
+ if(UPD.estado==='listo')return'<div class="card"><h2>✅ Descargada</h2><p><small>Toca “Actualizar” en la ventana de Android. Tus creaciones no se borran.</small></p></div>'+v;
+ if(UPD.estado==='error')return'<div class="card"><h2>😕 No se pudo descargar</h2>'+btn('alt','🔄 Probar otra vez','data-upd="1"')+'</div>'+v;
+ return v}
+window.onActualizacion=function(j){try{var r=JSON.parse(j);if(r.hay){UPD={estado:'hay',nueva:r.nueva,notas:r.notas};if(scr==='home')render()}}catch(e){}};
+window.onProgreso=function(p){UPD.pct=+p;if(scr==='home')render()};
+window.onDescarga=function(j){var r=JSON.parse(j);UPD.estado=r.ok?'listo':'error';if(scr==='home')render()};
+window.onPermiso=function(){UPD.estado='permiso';if(scr==='home')render()};
+document.addEventListener('click',function(e){var t=e.target.closest('button');if(!t||!t.dataset.upd)return;
+ var r=Android.actualizar();if(r==='ok'){UPD.estado='bajando';UPD.pct=0}else{UPD.estado='error'}render()});
 render();
+try{if(window.Android&&Android.buscarActualizacion)Android.buscarActualizacion()}catch(e){}
 </script>
 </body>
 </html>

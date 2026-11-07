@@ -20,7 +20,9 @@ App de Android para crear addons de Minecraft (Bedrock): criaturas, bloques y ob
 - La primera vez Android pide el permiso "Permitir de esta fuente": se activa una sola vez.
 - Las creaciones del niño no se borran al actualizar.
 
-**Para publicar una versión nueva** (después de subir los cambios a `main`):
+**Para publicar una versión nueva:** cambia el número en `version.txt` (por ejemplo de `1.0.0` a `1.0.1`) y súbelo a `main`. GitHub compila y crea el Release solo; el mensaje del commit aparece como novedades en la app.
+
+Otras formas que también funcionan:
 
 Desde la web (sirve en el teléfono): pestaña **Releases** → **Draft a new release** → en "Choose a tag" escribe la versión nueva (por ejemplo `v1.0.1`) y elige "Create new tag" → escribe qué cambió → **Publish release**. En unos 3 minutos GitHub le agrega `TallerDeMods.apk` solo.
 

@@ -1,6 +1,7 @@
 name: Crear APK
 
 # - Cada push a main: compila y deja la APK en "Artifacts" para probar.
+#   Si el número de version.txt todavía no tiene Release, lo crea solo (vX.Y.Z).
 # - Al publicar un Release (en la web: Releases > Draft a new release, etiqueta vX.Y.Z)
 #   o al subir una etiqueta vX.Y.Z: compila y deja TallerDeMods.apk en ese Release.
 #   La app lo detecta y se actualiza sola.
@@ -32,13 +33,20 @@ jobs:
 
       - name: Calcular versión
         id: ver
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
+          NUEVO=false
           if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
             V="${GITHUB_REF_NAME#v}"
           else
-            V="0.0.${GITHUB_RUN_NUMBER}"
+            V="$(tr -d ' \r\n' < version.txt)"
+            if [[ "$GITHUB_EVENT_NAME" == push ]] && ! gh release view "v$V" >/dev/null 2>&1; then
+              NUEVO=true
+            fi
           fi
           echo "version=$V" >> "$GITHUB_OUTPUT"
+          echo "nuevo=$NUEVO" >> "$GITHUB_OUTPUT"
 
       - name: Compilar la app
         run: gradle assembleRelease --no-daemon -PappVersion=${{ steps.ver.outputs.version }}
@@ -66,3 +74,13 @@ jobs:
           [ -z "$NOTAS" ] && NOTAS="Versión ${GITHUB_REF_NAME#v} de Taller de Mods."
           gh release create "$GITHUB_REF_NAME" TallerDeMods.apk \
             --title "Taller de Mods ${GITHUB_REF_NAME}" --notes "$NOTAS"
+
+      - name: Crear release porque version.txt subió
+        if: steps.ver.outputs.nuevo == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          V="${{ steps.ver.outputs.version }}"
+          NOTAS="$(git log -1 --format=%B)"
+          gh release create "v$V" TallerDeMods.apk --target "$GITHUB_SHA" \
+            --title "Taller de Mods v$V" --notes "$NOTAS"

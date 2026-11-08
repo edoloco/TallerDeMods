@@ -49,6 +49,21 @@ GitHub Actions compila, crea el Release con `TallerDeMods.apk` y el mensaje del 
 
 Al crear un **bloque** u **objeto** aparece "🎨 Dibújalo tú": un lienzo de 16×16 con lápiz, rellenar, borrar, copiar color, espejo, deshacer y paleta. El dibujo se usa como textura en Minecraft. En "Mi addon" el botón ✏️ permite cambiar cualquier cosa ya creada.
 
+## Pintar criaturas
+
+En la criatura, "🎨 Píntala tú": se elige parte (cabeza, cuerpo, brazos, piernas) y cara (frente, espalda, lados, arriba) y se pinta pixel por pixel, con vista previa de frente y espalda. Al pintarla, la criatura usa forma de persona (modelo de zombi), con el tamaño, fuerza y poderes elegidos.
+
+## Poderes de los objetos
+
+- Espadas y objetos: **al usarlo** (bola de fuego, bola de nieve, flecha, rayo, explosión, teletransporte, supersalto, correr rápido, curarse, llamar un gólem) y **al golpear** (quemar, envenenar, congelar, marchitar, rayo, mandar al aire, curarse).
+- Comida: **poder al comerla** (velocidad, salto, ver de noche, invisible, regenerar, fuerza, no quemarse, respirar bajo el agua, flotar).
+
+Funcionan con scripts, igual que las reglas de magia.
+
+## Si algo sale invisible o con "?"
+
+Casi siempre es porque el paquete **Apariencia** no está activo en el mundo (o quedó activo uno viejo). En el mundo: Editar → Paquetes de recursos → Activos debe tener "<nombre> - Apariencia (vN)". Los paquetes viejos que se llamaban "BP"/"RP" conviene borrarlos en Configuración → Almacenamiento. La app tiene esta misma ayuda en "Mi addon".
+
 ## Reglas de magia (estilo MCreator, más sencillo)
 
 En la pantalla principal, **Crear una regla**: eliges *cuándo pasa algo* (alguien usa mi objeto, toca/rompe/pone mi bloque, mi criatura muere, la golpean o golpea, un jugador entra al mundo, cada cierto tiempo) y *qué pasa* (mensaje, dar un poder, dar un objeto, invocar una criatura, explosión, rayo, fuego, curar, hacer daño, subir al cielo, sonido, partículas).

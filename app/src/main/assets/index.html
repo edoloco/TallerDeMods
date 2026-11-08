@@ -42,7 +42,12 @@ var NS='custom';
 function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
 function slug(s,f){return(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'')||f}
 function uuid(){try{return crypto.randomUUID()}catch(e){return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,function(c){var r=Math.random()*16|0;return(c=='x'?r:(r&3|8)).toString(16)})}}
-var st=JSON.parse(JSON.stringify(MOBS.filter(function(x){return x.k==='zombie'})[0]));st.k='steve';MOBS.push(st);
+function humanoidClient(tex,geo){return{identifier:'minecraft:zombie',materials:{default:'zombie'},textures:{default:tex},geometry:{default:geo||'geometry.zombie.v1.8'},
+ animations:{look_at_target:'animation.common.look_at_target',move:'animation.humanoid.move'},
+ scripts:{pre_animation:['variable.tcos0 = (Math.cos(query.modified_distance_moved * 38.17) * query.modified_move_speed / 1.0) * 57.3;'],animate:['look_at_target','move']},
+ render_controllers:['controller.render.default']}}
+(function(){var z=MOBS.filter(function(x){return x.k==='zombie'})[0];z.v='1.10.0';z.d=humanoidClient('textures/entity/zombie/zombie');
+ MOBS.push({k:'steve',n:'Steve',v:'1.10.0',d:humanoidClient('textures/entity/steve','geometry.humanoid.custom')})})();
 
 var CR=[['wither_storm','🌪️','Wither Storm'],['steve','🧍','Steve'],['zombie','🧟','Zombi'],['skeleton','💀','Esqueleto'],['creeper','💥','Creeper'],['spider','🕷️','Araña'],['enderman','🟣','Enderman'],['pig','🐷','Cerdo'],['cow','🐮','Vaca'],['chicken','🐔','Gallina'],['wolf','🐺','Lobo'],['sheep','🐑','Oveja'],['cat','🐱','Gato'],['fox','🦊','Zorro'],['panda','🐼','Panda'],['rabbit','🐰','Conejo'],['horse','🐴','Caballo'],['llama','🦙','Llama'],['bee','🐝','Abeja'],['slime','🟩','Slime'],['blaze','🔥','Blaze'],['ghast','👻','Ghast'],['wither','☠️','Wither'],['ender_dragon','🐉','Dragón'],['warden','👹','Warden'],['iron_golem','🤖','Gólem'],['villager_v2','🧑','Aldeano'],['witch','🧙','Bruja'],['phantom','🦇','Fantasma'],['polar_bear','🐻','Oso polar'],['turtle','🐢','Tortuga'],['axolotl','🦎','Ajolote'],['goat','🐐','Cabra'],['parrot','🦜','Loro'],['frog','🐸','Rana']];
 var COL=['#e53935','#fb8c00','#fdd835','#43a047','#00acc1','#1e88e5','#8e24aa','#d81b60','#6d4c41','#757575','#212121','#fafafa'];
@@ -59,6 +64,14 @@ var SND=[['random.levelup','🎉','Subir de nivel'],['random.explode','💥','Ex
 var PAR=[['minecraft:heart_particle','💕','Corazones'],['minecraft:totem_particle','✨','Tótem'],['minecraft:huge_explosion_emitter','💥','Explosión'],['minecraft:villager_happy','🌟','Estrellitas']];
 var AMT=[['poco','⏳','Poquito'],['medio','⌛','Normal'],['mucho','🕰️','Mucho']];
 var SCRIPT_VER='1.19.0';
+var USE=[['','🚫','Nada'],['fuego','☄️','Lanzar bola de fuego'],['nieve','❄️','Lanzar bola de nieve'],['flecha','🏹','Disparar flecha'],['rayo','⚡','Rayo donde miro'],['boom','💥','Explosión donde miro'],['tele','🌀','Teletransporte donde miro'],['salto','🦘','Supersalto'],['rapido','💨','Correr rápido'],['curar','💖','Curarme'],['golem','🗿','Llamar un gólem']];
+var HIT=[['','🚫','Nada especial'],['quemar','🔥','Quemar'],['veneno','☠️','Envenenar'],['congelar','🧊','Congelar (lento)'],['wither','🖤','Marchitar'],['rayo','⚡','Lanzar un rayo'],['aire','🎈','Mandarlo al aire'],['vampiro','🧛','Curarme al golpear']];
+var EAT=[['','🚫','Nada'],['speed','💨','Velocidad'],['jump_boost','🦘','Saltar alto'],['night_vision','🌙','Ver de noche'],['invisibility','👻','Invisible'],['regeneration','💖','Regenerar'],['strength','💪','Fuerza'],['fire_resistance','🧯','No quemarse'],['water_breathing','🐠','Respirar bajo el agua'],['levitation','🎈','Flotar']];
+function itemPowers(){var k=S.item.kind;
+ if(k==='comida')return step('6. 🪄 ¿Qué poder da al comerlo?',opts('item.eat',EAT));
+ return step('6. 🪄 ¿Qué hace al usarlo?','<p><small>Para usarlo: tenlo en la mano y toca la pantalla (sin apuntar a un bloque).</small></p>'+opts('item.use',USE))
+  +step('7. 🪄 ¿Qué pasa cuando golpeas con él?',opts('item.hit',HIT))}
+function itemPowerList(){return P.items.map(function(o){var x={i:NS+':'+o.id};if(o.kind==='comida'){x.e=o.eat||''}else{x.u=o.use||'';x.h=o.hit||''}return x}).filter(function(x){return x.u||x.h||x.e})}
 function nm(id){var f=null;['items','blocks','mobs'].forEach(function(k){P[k].forEach(function(o){if(NS+':'+o.id===id)f=o.name})});return f||id.replace('minecraft:','')}
 function subjList(k){var e={items:'⚔️',blocks:'🧱',mobs:'🐲'}[k];return P[k].map(function(o){return[NS+':'+o.id,e,o.name]})}
 function whoList(){var r=S.rule,mobOk=r.trig==='golpeada'||r.trig==='golpea';
@@ -74,7 +87,7 @@ function ruleText(r){var tr=TRIG.filter(function(x){return x[0]===r.trig})[0],ac
 function dflt(){return{
  mob:{name:'',base:'zombie',size:'normal',str:'normal',spd:'normal',mode:'hostil',pw:[],egg:'1',wild:'',freq:'normal',c1:'#43a047',c2:'#212121',loot:[],ing:[]},
  block:{name:'',color:'#1e88e5',light:'0',hard:'normal',ing:[]},
- item:{name:'',kind:'espada',color:'#e53935',power:'normal',glow:'0',ing:[]},
+ item:{name:'',kind:'espada',color:'#e53935',power:'normal',glow:'0',ing:[],use:'',hit:'',eat:''},
  rule:{trig:'usar',subj:'',act:'mensaje',who:'player',val:'',amt:'medio',lvl:'suave',brk:'0',text:'¡Hola!',every:'10'},
  draw:{kind:'item',px:[],tool:'lapiz',col:'#e53935',mir:false,hist:[]}}}
 var S=dflt(),P={name:'Mi addon',mobs:[],blocks:[],items:[],rules:[]},scr='home',MSG='';
@@ -104,7 +117,7 @@ mob:function(){return head('🐲 Criatura')
  +step('6. ¿Cómo se porta?',opts('mob.mode',[['hostil','😈','Malvado: te ataca'],['neutral','😠','Se defiende'],['pasivo','😊','Amigable: huye']]))
  +step('7. Poderes (hasta 4)',opts('mob.pw',PW,1,4))
  +step('8. ¿Cómo aparece?','<p><small>Siempre podrás invocarlo con un comando.</small></p>'+opts('mob.egg',[['1','🥚','Con huevo'],['0','🚫','Sin huevo']])+'<p><b>¿Aparece solo en el mundo?</b></p>'+opts('mob.wild',WILD)+(S.mob.wild?'<p><b>¿Cuántos?</b></p>'+opts('mob.freq',[['raro','🍀','Pocos'],['normal','🙂','Normal'],['mucho','🎉','Muchos']]):''))
- +step('9. Colores del huevo','<div class="half"><input type="color" data-i="mob.c1" value="'+S.mob.c1+'"><input type="color" data-i="mob.c2" value="'+S.mob.c2+'"></div>')
+ +skinStep()+step('9. Colores del huevo','<div class="half"><input type="color" data-i="mob.c1" value="'+S.mob.c1+'"><input type="color" data-i="mob.c2" value="'+S.mob.c2+'"></div>')
  +step('10. ¿Qué suelta al morir? (hasta 3)',opts('mob.loot',LOOT,1,3))
  +btn('','✅ ¡Crear criatura!','data-make="mob"')},
 block:function(){return head('🧱 Bloque')
@@ -120,7 +133,7 @@ item:function(){var k=S.item.kind,pw=k==='espada'?[['suave','🪶','Suave'],['no
  +step('2. ¿Qué es?',opts('item.kind',[['espada','⚔️','Espada'],['comida','🍎','Comida'],['objeto','💎','Objeto']]))
  +step('3. ¿De qué color?',swatches('item.color'))
  +(pw?step(k==='espada'?'4. ¿Qué tan fuerte?':'4. ¿Cuánta hambre quita?',opts('item.power',pw)):'')
- +step('5. ¿Brilla como encantado?',opts('item.glow',[['0','➖','Normal'],['1','✨','Brilla']]))
+ +step('5. ¿Brilla como encantado?',opts('item.glow',[['0','➖','Normal'],['1','✨','Brilla']]))+itemPowers()
  +drawStep('item')+RECIPE('item')+btn('alt','✅ ¡Crear objeto!','data-make="item"')},
 rule:function(){var r=S.rule,k=SUBJ[r.trig],h=head('🧠 Regla de magia')+'<p><small>Una regla dice: cuando pasa algo, entonces haz otra cosa.</small></p>'
  +step('1. ¿Cuándo pasa?',opts('rule.trig',TRIG));
@@ -147,9 +160,14 @@ draw:function(){var D=S.draw,T=[['lapiz','✏️','Lápiz'],['balde','🪣','Rel
 mine:function(){var L=function(key,e){return P[key].map(function(o,i){return'<div class="row"><span>'+e+' <b>'+esc(o.name)+'</b>'+(key==='mobs'?'<br><small>Comando:</small> <code>/summon '+NS+':'+o.id+'</code>':'')+'</span><span style="display:flex;gap:6px;flex:none"><button class="del" data-edit="'+key+':'+i+'" aria-label="Cambiar">✏️</button><button class="del" data-del="'+key+':'+i+'" aria-label="Borrar">🗑️</button></span></div>'}).join('')};
  var R=P.rules.map(function(r,i){return'<div class="row"><span>🧠 '+ruleText(r)+'</span><button class="del" data-del="rules:'+i+'" aria-label="Borrar">🗑️</button></div>'}).join('');
  var all=L('mobs','🐲')+L('blocks','🧱')+L('items','⚔️')+R;
- return head('📦 Mi addon')+step('Nombre de mi addon',txt('P.name','Mi addon'))+'<div class="card">'+(all||'<p>Todavía no hay nada. ¡Crea tu primera cosa!</p>')+'</div>'+btn('blue','🚀 Enviar a Minecraft','data-send="1"')+'<p><small>Cuando se abra Minecraft, toca Importar. Después crea un mundo y en Complementos activa los dos paquetes de tu addon.</small></p>'}
+ return head('📦 Mi addon')+step('Nombre de mi addon',txt('P.name','Mi addon'))+'<div class="card">'+(all||'<p>Todavía no hay nada. ¡Crea tu primera cosa!</p>')+'</div>'+btn('blue','🚀 Enviar a Minecraft','data-send="1"')+'<p><small>Cuando se abra Minecraft, toca Importar. Después crea un mundo y en Complementos activa los dos paquetes de tu addon.</small></p>'
+ +'<div class="card"><h2>🤔 ¿Algo sale invisible o con “?”</h2><p><small>Eso pasa cuando el paquete <b>Apariencia</b> no está activo.</small></p><ol style="padding-left:20px;margin:0">'
+ +'<li>Abre el mundo → ✏️ Editar → <b>Paquetes de recursos</b> → en <b>Activos</b> debe estar <b>'+esc(P.name||'Mi addon')+' - Apariencia</b>.</li>'
+ +'<li>En <b>Paquetes de comportamiento</b> debe estar <b>'+esc(P.name||'Mi addon')+' - Comportamiento</b>.</li>'
+ +'<li>Si ves paquetes viejos llamados “BP” o “RP”, desactívalos. Puedes borrarlos en Configuración → Almacenamiento.</li>'
+ +'<li>Si usas reglas o poderes: en el mundo activa <b>Experimentos → API beta</b> solo si Minecraft lo pide.</li></ol></div>'}
 };
-function render(){var y=window.scrollY;$('app').innerHTML=(MSG?'<div class="toast">'+esc(MSG)+'</div>':'')+VIEW[scr]();window.scrollTo(0,y);if(scr==='draw')drawInit()}
+function render(){var y=window.scrollY;$('app').innerHTML=(MSG?'<div class="toast">'+esc(MSG)+'</div>':'')+VIEW[scr]();window.scrollTo(0,y);if(scr==='draw')drawInit();if(scr==='skin')skinInit();if(scr==='mob')skinThumb()}
 function go(s){scr=s;MSG='';render();window.scrollTo(0,0)}
 function toast(m){MSG=m;render();window.scrollTo(0,0)}
 
@@ -173,6 +191,8 @@ function make(kind){var o=JSON.parse(JSON.stringify(S[kind]));
  var L=P[kind+'s'];for(var i=L.length-1;i>=0;i--)if(L[i].id===o.id)L.splice(i,1);
  L.push(o);saveP();S[kind]=dflt()[kind];scr='mine';toast('🎉 ¡Listo! Creaste '+o.name)}
 
+function packIcon(bg,em){var c=document.createElement('canvas');c.width=c.height=64;var x=c.getContext('2d');x.fillStyle=bg;x.fillRect(0,0,64,64);x.fillStyle='#2b2118';x.fillRect(0,0,64,4);x.fillRect(0,60,64,4);x.fillRect(0,0,4,64);x.fillRect(60,0,4,64);
+ x.font='38px sans-serif';x.textAlign='center';x.textBaseline='middle';x.fillText(em,32,35);return c.toDataURL('image/png').split(',')[1]}
 function icon(kind,color,block){var c=document.createElement('canvas');c.width=c.height=16;var x=c.getContext('2d');
  if(block){x.fillStyle=color;x.fillRect(0,0,16,16);var s=7;x.fillStyle='rgba(0,0,0,.18)';for(var i=0;i<40;i++){s=(s*73+19)%251;x.fillRect(s%16,(s*7)%16,1,1)}x.fillStyle='rgba(255,255,255,.18)';for(i=0;i<20;i++){s=(s*73+19)%251;x.fillRect(s%16,(s*5)%16,1,1)}}
  else if(kind==='espada'){x.fillStyle='#6b4423';for(var j=0;j<4;j++)x.fillRect(2+j,13-j,1,1);x.fillRect(5,8,3,1);x.fillRect(5,8,1,3);x.fillStyle=color;for(j=0;j<8;j++)x.fillRect(6+j,9-j,2,1)}
@@ -249,27 +269,61 @@ function RUNTIME(world,system,R){
  world.afterEvents.playerSpawn.subscribe(function(e){if(e.initialSpawn){var p=e.player;each('entra','',{player:p,dim:p.dimension,loc:p.location})}});
  var n=0;system.runInterval(function(){n++;R.forEach(function(r){if(r.t==='tiempo'&&n%r.e===0)world.getAllPlayers().forEach(function(p){go(r,{player:p,dim:p.dimension,loc:p.location})})})},20);
 }
+function ITEMRT(world,system,IT){
+ if(!IT.length)return;
+ var by={},last={};IT.forEach(function(x){by[x.i]=x});
+ function cmd(e,c){try{e.runCommand(c)}catch(x){}}
+ function look(p,dist){try{var h=p.getBlockFromViewDirection({maxDistance:dist||60});if(h&&h.block)return h.block.location}catch(x){}var d=p.getViewDirection(),l=p.location;return{x:l.x+d.x*12,y:l.y+1+d.y*12,z:l.z+d.z*12}}
+ function shoot(p,type){var d=p.getViewDirection(),h=p.getHeadLocation(),l={x:h.x+d.x*1.6,y:h.y+d.y*1.6,z:h.z+d.z*1.6},e;
+  try{e=p.dimension.spawnEntity(type,l)}catch(x){return}
+  try{var pr=e.getComponent('minecraft:projectile');try{pr.owner=p}catch(y){}pr.shoot({x:d.x*2.2,y:d.y*2.2,z:d.z*2.2});return}catch(x){}
+  try{e.applyImpulse({x:d.x*1.5,y:d.y*1.5,z:d.z*1.5})}catch(x){}}
+ function held(p){try{var it=p.getComponent('minecraft:equippable').getEquipment('Mainhand');return it?it.typeId:''}catch(x){}
+  try{var it2=p.getComponent('minecraft:inventory').container.getItem(p.selectedSlotIndex);return it2?it2.typeId:''}catch(x){}return''}
+ world.afterEvents.itemUse.subscribe(function(e){var p=e.source,o=by[e.itemStack.typeId];if(!o||!o.u)return;
+  var t=system.currentTick;if(last[p.id]&&t-last[p.id]<10)return;last[p.id]=t;var u=o.u,l;
+  if(u==='fuego')shoot(p,'minecraft:small_fireball');
+  else if(u==='nieve')shoot(p,'minecraft:snowball');
+  else if(u==='flecha')shoot(p,'minecraft:arrow');
+  else if(u==='rayo'){l=look(p);try{p.dimension.spawnEntity('minecraft:lightning_bolt',l)}catch(x){}}
+  else if(u==='boom'){l=look(p);try{p.dimension.createExplosion(l,3,{breaksBlocks:false})}catch(x){}}
+  else if(u==='tele'){l=look(p,40);try{p.teleport({x:l.x+0.5,y:l.y+1,z:l.z+0.5})}catch(x){}}
+  else if(u==='salto')cmd(p,'effect @s jump_boost 15 3 true');
+  else if(u==='rapido')cmd(p,'effect @s speed 15 3 true');
+  else if(u==='curar'){cmd(p,'effect @s instant_health 1 1 true');cmd(p,'particle minecraft:heart_particle ~ ~2 ~')}
+  else if(u==='golem')cmd(p,'summon iron_golem ^ ^ ^2')});
+ world.afterEvents.entityHitEntity.subscribe(function(e){var p=e.damagingEntity,m=e.hitEntity;if(!p||p.typeId!=='minecraft:player'||!m)return;var o=by[held(p)];if(!o||!o.h)return;var h=o.h;
+  if(h==='quemar'){try{m.setOnFire(5,true)}catch(x){}}
+  else if(h==='veneno')cmd(m,'effect @s poison 5 1');
+  else if(h==='congelar')cmd(m,'effect @s slowness 5 4');
+  else if(h==='wither')cmd(m,'effect @s wither 5 1');
+  else if(h==='rayo'){try{m.dimension.spawnEntity('minecraft:lightning_bolt',m.location)}catch(x){}}
+  else if(h==='aire')cmd(m,'effect @s levitation 2 4');
+  else if(h==='vampiro')cmd(p,'effect @s instant_health 1 0 true')});
+ world.afterEvents.itemCompleteUse.subscribe(function(e){var p=e.source,o=e.itemStack&&by[e.itemStack.typeId];if(!o||!o.e)return;
+  cmd(p,'effect @s '+o.e+' '+(o.e==='levitation'?6:30)+' 1 true')});
+}
 function genScript(){var rs=P.rules.map(function(r){var o=ruleCmd(r);return{t:r.trig,s:r.subj,w:r.who,e:+r.every||10,k:o.k,c:o.c,r:o.r,b:o.b}});
- return'import { world, system } from "@minecraft/server";\nvar R = '+JSON.stringify(rs)+';\n('+RUNTIME.toString()+')(world, system, R);\n'}
+ return'import { world, system } from "@minecraft/server";\nvar R = '+JSON.stringify(rs)+';\nvar IT = '+JSON.stringify(itemPowerList())+';\n('+RUNTIME.toString()+')(world, system, R);\n('+ITEMRT.toString()+')(world, system, IT);\n'}
 async function build(){
  if(!P.pk)P.pk={b:uuid(),r:uuid(),bm:uuid(),rm:uuid(),sm:uuid(),v:0};P.pk.v++;saveP();var VER=[1,0,P.pk.v];
  var name=P.name.trim()||'Mi addon',zip=new JSZip(),bp=zip.folder(name+' BP'),rp=zip.folder(name+' RP'),bH=P.pk.b,rH=P.pk.r,lang='';
- var mf=function(n,d,u,t,dep,mu){return{format_version:2,header:{name:name+n,description:d,uuid:u,version:VER,min_engine_version:[1,21,0]},modules:[{type:t,uuid:mu,version:VER}],dependencies:[{uuid:dep,version:VER}]}};
- var bm=mf(' BP','Comportamiento',bH,'data',rH,P.pk.bm);
- if(P.rules.length){bm.modules.push({type:'script',language:'javascript',uuid:P.pk.sm,version:VER,entry:'scripts/main.js'});bm.dependencies.push({module_name:'@minecraft/server',version:SCRIPT_VER});bp.file('scripts/main.js',genScript())}
+ var mf=function(n,d,u,t,dep,mu){return{format_version:2,header:{name:name+n+' (v'+P.pk.v+')',description:d,uuid:u,version:VER,min_engine_version:[1,21,0]},modules:[{type:t,uuid:mu,version:VER}],dependencies:[{uuid:dep,version:VER}]}};
+ var bm=mf(' - Comportamiento','Activa también "'+name+' - Apariencia".',bH,'data',rH,P.pk.bm);
+ if(P.rules.length||itemPowerList().length){bm.modules.push({type:'script',language:'javascript',uuid:P.pk.sm,version:VER,entry:'scripts/main.js'});bm.dependencies.push({module_name:'@minecraft/server',version:SCRIPT_VER});bp.file('scripts/main.js',genScript())}
  bp.file('manifest.json',JSON.stringify(bm,null,2));
- rp.file('manifest.json',JSON.stringify(mf(' RP','Recursos',rH,'resources',bH,P.pk.rm),null,2));
+ rp.file('manifest.json',JSON.stringify(mf(' - Apariencia','Texturas y dibujos. Debe estar ACTIVO en el mundo.',rH,'resources',bH,P.pk.rm),null,2));
  P.mobs.forEach(function(o){var m=mobParams(o),full=NS+':'+m.id,b=MOBS.filter(function(x){return x.k===m.base})[0]||MOBS[0],d=JSON.parse(JSON.stringify(b.d));
-  d.identifier=full;d.spawn_egg={base_color:o.c1.toUpperCase(),overlay_color:o.c2.toUpperCase()};if(m.base==='steve')d.textures={default:'textures/entity/steve'};
+  d.identifier=full;d.spawn_egg={base_color:o.c1.toUpperCase(),overlay_color:o.c2.toUpperCase()};if(o.skin){d=humanoidClient('textures/entity/'+NS+'_'+m.id);d.identifier=full;d.spawn_egg={base_color:o.c1.toUpperCase(),overlay_color:o.c2.toUpperCase()};rp.file('textures/entity/'+NS+'_'+m.id+'.png',o.skin,{base64:true})}
   bp.file('entities/'+m.id+'.json',JSON.stringify(mobEnt(m,o.egg!=='0'),null,2));
-  rp.file('entity/'+m.id+'.entity.json',JSON.stringify({format_version:b.v,'minecraft:client_entity':{description:d}},null,2));
+  rp.file('entity/'+m.id+'.entity.json',JSON.stringify({format_version:o.skin?'1.10.0':b.v,'minecraft:client_entity':{description:d}},null,2));
   if(o.wild)bp.file('spawn_rules/'+m.id+'.json',JSON.stringify(spawnRule(m.id,o.wild,o.freq,o.mode==='pasivo'?'animal':'monster'),null,2));
   if(m.loot)bp.file('loot_tables/'+NS+'/'+m.loot+'.json',JSON.stringify({pools:[{rolls:1,entries:o.loot.map(function(i){return{type:'item',name:'minecraft:'+i,weight:1,functions:[{function:'set_count',count:{min:1,max:3}}]}})}]},null,2));
   lang+='entity.'+full+'.name='+o.name+'\nitem.spawn_egg.entity.'+full+'.name=Huevo de '+o.name+'\n';recipe(bp,o)});
  var it={},tt={};
  P.items.forEach(function(o){var c={'minecraft:display_name':{value:o.name},'minecraft:icon':{textures:{default:o.id}},'minecraft:max_stack_size':o.kind==='espada'?1:64};
   if(o.kind==='espada'){c['minecraft:damage']={suave:4,normal:7,fuerte:10,super:16}[o.power]||7;c['minecraft:durability']={max_durability:{suave:250,normal:500,fuerte:1500,super:3000}[o.power]||500};c['minecraft:hand_equipped']=true;c['minecraft:enchantable']={slot:'sword',value:10}}
-  if(o.kind==='comida'){c['minecraft:food']={nutrition:{poco:3,normal:6,mucho:10}[o.power]||6,saturation_modifier:'normal',can_always_eat:false};c['minecraft:use_modifiers']={use_duration:1.6,movement_modifier:0.35}}
+  if(o.kind==='comida'){c['minecraft:food']={nutrition:{poco:3,normal:6,mucho:10}[o.power]||6,saturation_modifier:0.6,can_always_eat:true};c['minecraft:use_animation']='eat';c['minecraft:tags']={tags:['minecraft:is_food']};c['minecraft:use_modifiers']={use_duration:1.6,movement_modifier:0.35}}
   if(o.glow==='1')c['minecraft:glint']=true;
   bp.file('items/'+o.id+'.json',JSON.stringify({format_version:'1.21.0','minecraft:item':{description:{identifier:NS+':'+o.id,menu_category:{category:o.kind==='espada'?'equipment':'items'}},components:c}},null,2));
   it[o.id]={textures:'textures/items/'+o.id};rp.file('textures/items/'+o.id+'.png',o.tex||icon(o.kind,o.color),{base64:true});recipe(bp,o)});
@@ -278,6 +332,8 @@ async function build(){
   bp.file('blocks/'+o.id+'.json',JSON.stringify({format_version:'1.21.0','minecraft:block':{description:{identifier:NS+':'+o.id,menu_category:{category:'construction'}},components:{'minecraft:destructible_by_mining':{seconds_to_destroy:{blando:1,normal:3,duro:10,durisimo:50}[o.hard]||3},'minecraft:light_emission':+o.light||0,'minecraft:material_instances':{'*':{texture:'b_'+o.id,render_method:'opaque'}}}}},null,2));
   tt['b_'+o.id]={textures:'textures/blocks/'+o.id};rp.file('textures/blocks/'+o.id+'.png',o.tex||icon('',o.color,1),{base64:true});lang+='tile.'+NS+':'+o.id+'.name='+o.name+'\n';recipe(bp,o)});
  if(P.blocks.length)rp.file('textures/terrain_texture.json',JSON.stringify({resource_pack_name:name,texture_name:'atlas.terrain',padding:8,num_mip_levels:4,texture_data:tt},null,2));
+ bp.file('pack_icon.png',packIcon('#4caf3a','⚙️'),{base64:true});rp.file('pack_icon.png',packIcon('#e8870e','🎨'),{base64:true});
+ if(P.blocks.length){var bj={format_version:[1,1,0]};P.blocks.forEach(function(o){bj[NS+':'+o.id]={sound:'stone'}});rp.file('blocks.json',JSON.stringify(bj,null,2))}
  rp.file('texts/languages.json',JSON.stringify(['es_ES','en_US']));rp.file('texts/es_ES.lang',lang);rp.file('texts/en_US.lang',lang);
  return zip.generateAsync({type:'base64'})}
 
@@ -327,6 +383,77 @@ document.addEventListener('click',function(e){var t=e.target.closest('button');i
  if(d.dclear){D.hist.push(D.px.slice());D.px=D.px.map(function(){return''});return drawPaint()}
  if(d.dsave)return drawSave()});
 document.addEventListener('change',function(e){if(e.target.dataset.dcol){S.draw.col=e.target.value;if(S.draw.tool!=='balde')S.draw.tool='lapiz';render()}});
+
+// ---------- Pintor de criaturas (piel 64x32, forma de persona) ----------
+var SKP={cabeza:{n:'Cabeza',e:'🙂',f:{frente:[[8,8,8,8]],espalda:[[24,8,8,8]],lados:[[0,8,8,8],[16,8,8,8]],arriba:[[8,0,8,8]]}},
+ cuerpo:{n:'Cuerpo',e:'👕',f:{frente:[[20,20,8,12]],espalda:[[32,20,8,12]],lados:[[16,20,4,12],[28,20,4,12]],arriba:[[20,16,8,4],[28,16,8,4]]}},
+ brazos:{n:'Brazos',e:'💪',f:{frente:[[44,20,4,12]],espalda:[[52,20,4,12]],lados:[[40,20,4,12],[48,20,4,12]],arriba:[[44,16,4,4],[48,16,4,4]]}},
+ piernas:{n:'Piernas',e:'👖',f:{frente:[[4,20,4,12]],espalda:[[12,20,4,12]],lados:[[0,20,4,12],[8,20,4,12]],arriba:[[4,16,4,4],[8,16,4,4]]}}};
+var SKF=[['frente','😀','Frente'],['espalda','🔙','Espalda'],['lados','↔️','Lados'],['arriba','⬆️','Arriba']];
+var SK={part:'cabeza',face:'frente',px:[],tool:'lapiz',col:'#000000',mir:false,hist:[]};
+function shade(h,f){var n=parseInt(h.slice(1),16),r=n>>16,g=n>>8&255,b=n&255;r=Math.min(255,r*f|0);g=Math.min(255,g*f|0);b=Math.min(255,b*f|0);return'#'+((1<<24)+(r<<16)+(g<<8)+b).toString(16).slice(1)}
+function skinDefault(){var m=S.mob,px=[],i,a=m.c1,b=m.c2;for(i=0;i<64*32;i++)px.push(a);
+ function rect(x,y,w,h,c){for(var j=0;j<h;j++)for(var k=0;k<w;k++)px[(y+j)*64+x+k]=c}
+ rect(16,16,24,16,b);rect(0,16,16,16,shade(b,0.7));rect(8,0,8,8,shade(a,0.8));
+ rect(9,12,2,1,'#ffffff');rect(13,12,2,1,'#ffffff');rect(10,12,1,1,'#000000');rect(13,12,1,1,'#000000');rect(10,14,4,1,shade(a,0.5));return px}
+function skinRects(){return SKP[SK.part].f[SK.face]}
+function skinStep(){var m=S.mob;
+ return step('🎨 Píntala tú (opcional)','<div style="display:flex;gap:12px;align-items:center">'+(m.skin?'<canvas id="skinThumb" width="16" height="32" style="width:48px;height:96px;image-rendering:pixelated;border:3px solid #2b2118;border-radius:4px;background:#ddd"></canvas>':'')
+  +'<small>'+(m.skin?'Usarás tu pintura. Tu criatura tendrá forma de persona.':'Píntala parte por parte. Al pintarla tendrá forma de persona (como un zombi), con el tamaño y poderes que elijas.')+'</small></div>'
+  +btn('pur',m.skin?'✏️ Cambiar mi pintura':'🎨 Pintar mi criatura','data-skin="1"')+(m.skin?'<button class="back" data-unskin="1">Quitar pintura</button>':''))}
+function openSkin(){SK.hist=[];SK.part='cabeza';SK.face='frente';SK.tool='lapiz';if(!S.mob.skin){SK.px=skinDefault();go('skin');return}
+ SK.px=skinDefault();go('skin');var im=new Image();im.onload=function(){var c=document.createElement('canvas');c.width=64;c.height=32;var x=c.getContext('2d');x.drawImage(im,0,0);var d=x.getImageData(0,0,64,32).data;
+  for(var i=0;i<64*32;i++)if(d[i*4+3]>127)SK.px[i]='#'+[0,1,2].map(function(k){return('0'+d[i*4+k].toString(16)).slice(-2)}).join('');if(scr==='skin')skinPaint()};im.src='data:image/png;base64,'+S.mob.skin}
+VIEW.skin=function(){var b=function(a,e,t,on){return'<button type="button" class="opt'+(on?' on':'')+'" '+a+'><span class="e">'+e+'</span>'+t+'</button>'};
+ return'<div class="top"><button class="back" data-sback="1">⬅️</button><h1>🎨 Pintar criatura</h1></div>'
+ +step('¿Qué parte?','<div class="grid">'+Object.keys(SKP).map(function(k){return b('data-spart="'+k+'"',SKP[k].e,SKP[k].n,SK.part===k)}).join('')+'</div>'
+  +'<div class="grid" style="margin-top:8px">'+SKF.map(function(f){return b('data-sface="'+f[0]+'"',f[1],f[2],SK.face===f[0])}).join('')+'</div>')
+ +'<div class="card" style="text-align:center"><canvas id="skinCv" style="touch-action:none;-webkit-user-select:none;user-select:none;border:3px solid #2b2118;border-radius:4px;max-width:100%"></canvas>'
+ +'<p style="margin:8px 0 0"><small>Así se ve (frente y espalda):</small><br><canvas id="skinPrev" width="40" height="32" style="width:200px;height:160px;image-rendering:pixelated"></canvas></p></div>'
+ +step('Herramienta','<div class="grid">'+[['lapiz','✏️','Lápiz'],['balde','🪣','Rellenar'],['gotero','💧','Copiar color']].map(function(t){return b('data-st="'+t[0]+'"',t[1],t[2],SK.tool===t[0])}).join('')
+  +b('data-smir="1"','🦋','Espejo',SK.mir)+b('data-sundo="1"','↩️','Deshacer',0)+b('data-scopy="1"','🔁','Frente → espalda',0)+'</div>')
+ +step('Color','<div class="grid" style="grid-template-columns:repeat(6,1fr)">'+PAL.map(function(c){return'<button type="button" class="sw'+(SK.col===c?' on':'')+'" style="height:40px;background:'+c+'" data-sc="'+c+'" aria-label="Color"></button>'}).join('')+'</div>'
+  +'<p><small>¿Otro color?</small></p><input type="color" data-scol="1" value="'+SK.col+'">')
+ +btn('','✅ ¡Usar esta pintura!','data-ssave="1"')};
+function skinCell(){var r=skinRects()[0];return Math.floor(Math.min(300/r[2],300/r[3]))}
+function skinPaint(){var c=$('skinCv');if(!c)return;var r=skinRects()[0],z=skinCell(),x=c.getContext('2d');
+ if(c.width!==r[2]*z||c.height!==r[3]*z){c.width=r[2]*z;c.height=r[3]*z}
+ for(var j=0;j<r[3];j++)for(var k=0;k<r[2];k++){x.fillStyle=SK.px[(r[1]+j)*64+r[0]+k];x.fillRect(k*z,j*z,z,z)}
+ x.strokeStyle='rgba(0,0,0,.2)';x.lineWidth=1;x.beginPath();for(k=1;k<r[2];k++){x.moveTo(k*z+.5,0);x.lineTo(k*z+.5,c.height)}for(j=1;j<r[3];j++){x.moveTo(0,j*z+.5);x.lineTo(c.width,j*z+.5)}x.stroke();
+ if(SK.mir){x.strokeStyle='rgba(142,68,173,.8)';x.lineWidth=2;x.beginPath();x.moveTo(c.width/2,0);x.lineTo(c.width/2,c.height);x.stroke()}
+ skinDoll($('skinPrev'),true)}
+function skinDoll(cv,both,px){if(!cv)return;px=px||SK.px;var x=cv.getContext('2d');x.clearRect(0,0,cv.width,cv.height);
+ function blit(sx,sy,w,h,dx,dy,flip){for(var j=0;j<h;j++)for(var k=0;k<w;k++){x.fillStyle=px[(sy+j)*64+sx+(flip?w-1-k:k)];x.fillRect(dx+k,dy+j,1,1)}}
+ function doll(ox,F){blit(F.h[0],F.h[1],8,8,ox+4,0);blit(F.b[0],F.b[1],8,12,ox+4,8);blit(F.a[0],F.a[1],4,12,ox,8);blit(F.a[0],F.a[1],4,12,ox+12,8,1);blit(F.l[0],F.l[1],4,12,ox+4,20);blit(F.l[0],F.l[1],4,12,ox+8,20,1)}
+ doll(0,{h:[8,8],b:[20,20],a:[44,20],l:[4,20]});if(both)doll(24,{h:[24,8],b:[32,20],a:[52,20],l:[12,20]})}
+function skinSet(cx,cy,v){var rs=skinRects();rs.forEach(function(r){SK.px[(r[1]+cy)*64+r[0]+cx]=v;if(SK.mir)SK.px[(r[1]+cy)*64+r[0]+r[2]-1-cx]=v})}
+function skinAt(cx,cy){var r=skinRects()[0],i=(r[1]+cy)*64+r[0]+cx;
+ if(SK.tool==='gotero'){SK.col=SK.px[i];SK.tool='lapiz';render();return}
+ if(SK.tool==='balde'){var from=SK.px[i],to=SK.col;if(from===to)return;var q=[[cx,cy]],seen={};while(q.length){var p=q.pop(),k=p[0]+','+p[1];if(seen[k]||p[0]<0||p[1]<0||p[0]>=r[2]||p[1]>=r[3])continue;seen[k]=1;
+  if(SK.px[(r[1]+p[1])*64+r[0]+p[0]]!==from)continue;skinSet(p[0],p[1],to);q.push([p[0]+1,p[1]],[p[0]-1,p[1]],[p[0],p[1]+1],[p[0],p[1]-1])}skinPaint();return}
+ skinSet(cx,cy,SK.col);skinPaint()}
+function skinInit(){var c=$('skinCv');if(!c)return;skinPaint();var down=false,last='';
+ function cell(e){var r=c.getBoundingClientRect(),f=skinRects()[0];return[Math.max(0,Math.min(f[2]-1,Math.floor((e.clientX-r.left)/r.width*f[2]))),Math.max(0,Math.min(f[3]-1,Math.floor((e.clientY-r.top)/r.height*f[3])))]}
+ c.addEventListener('pointerdown',function(e){e.preventDefault();down=true;try{c.setPointerCapture(e.pointerId)}catch(x){}SK.hist.push(SK.px.slice());if(SK.hist.length>30)SK.hist.shift();var p=cell(e);last=p.join();skinAt(p[0],p[1])});
+ c.addEventListener('pointermove',function(e){if(!down||SK.tool!=='lapiz')return;var p=cell(e);if(p.join()!==last){last=p.join();skinAt(p[0],p[1])}});
+ ['pointerup','pointercancel','pointerleave'].forEach(function(n){c.addEventListener(n,function(){down=false})})}
+function skinSave(){var c=document.createElement('canvas');c.width=64;c.height=32;var x=c.getContext('2d');for(var i=0;i<64*32;i++){x.fillStyle=SK.px[i];x.fillRect(i%64,i/64|0,1,1)}
+ S.mob.skin=c.toDataURL('image/png').split(',')[1];S.mob.skinPx=null;scr='mob';toast('🎨 ¡Pintura lista! Ahora termina de crear tu criatura.')}
+function skinThumb(){var c=$('skinThumb');if(!c||!S.mob.skin)return;var im=new Image();im.onload=function(){var t=document.createElement('canvas');t.width=64;t.height=32;var x=t.getContext('2d');x.drawImage(im,0,0);var d=x.getImageData(0,0,64,32).data,px=[];
+  for(var i=0;i<64*32;i++)px.push('rgb('+d[i*4]+','+d[i*4+1]+','+d[i*4+2]+')');c.width=16;c.height=32;skinDoll(c,false,px)};im.src='data:image/png;base64,'+S.mob.skin}
+document.addEventListener('click',function(e){var t=e.target.closest('button');if(!t)return;var d=t.dataset;
+ if(d.skin)return openSkin();
+ if(d.unskin){delete S.mob.skin;return render()}
+ if(d.sback)return go('mob');
+ if(d.spart){SK.part=d.spart;return render()}
+ if(d.sface){SK.face=d.sface;return render()}
+ if(d.st){SK.tool=d.st;return render()}
+ if(d.sc){SK.col=d.sc;if(SK.tool==='gotero')SK.tool='lapiz';return render()}
+ if(d.smir){SK.mir=!SK.mir;return render()}
+ if(d.sundo){if(SK.hist.length)SK.px=SK.hist.pop();return skinPaint()}
+ if(d.scopy){SK.hist.push(SK.px.slice());var f=SKP[SK.part].f.frente[0],b2=SKP[SK.part].f.espalda[0];for(var j=0;j<f[3];j++)for(var k=0;k<f[2];k++)SK.px[(b2[1]+j)*64+b2[0]+k]=SK.px[(f[1]+j)*64+f[0]+k];toast('🔁 Copié el frente a la espalda');return}
+ if(d.ssave)return skinSave()});
+document.addEventListener('change',function(e){if(e.target.dataset.scol){SK.col=e.target.value;if(SK.tool==='gotero')SK.tool='lapiz';render()}});
 
 var UPD={};
 function updBox(){if(!window.Android||!Android.version)return'';var v='<p style="text-align:center"><small>Versión '+esc(Android.version())+'</small></p>'

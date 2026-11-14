@@ -475,7 +475,19 @@ function shapeEncode(vox){var pal=[],d='';for(var i=0;i<vox.length;i++){var c=vo
 function shapeDecode(sh){var v=[],n=shDims(sh);n=n.W*n.W*n.H;for(var i=0;i<n;i++){var ch=sh.d.charAt(i);v.push(ch==='.'||!ch?'':sh.pal[ch.charCodeAt(0)-48]||'')}return v}
 function emptyVox(W,H){W=W||SH.W;H=H||SH.H;var v=[];for(var i=0;i<W*W*H;i++)v.push('');return v}
 function resizeVox(v,W0,H0,W1,H1){var n=emptyVox(W1,H1),off0=Math.floor((W1-W0)/2);for(var y=0;y<Math.min(H0,H1);y++)for(var z=0;z<W0;z++)for(var x=0;x<W0;x++){var c=v[vk(W0,x,y,z)];if(!c)continue;var X=x+off0,Z=z+off0;if(X>=0&&X<W1&&Z>=0&&Z<W1)n[vk(W1,X,y,Z)]=c}return n}
-function tplVox(t){var W0=SH.W,H0=SH.H;SH.W=16;SH.H=16;var v=tpl16(t);SH.W=W0;SH.H=H0;return resizeVox(v,16,16,W0,H0)}
+// Cuerpos de referencia genéricos (proporciones en bloques, sin copiar personajes): [ancho, alto, construir]
+var BODY={
+ persona:[16,32,function(B){B(4,0,6,4,12,4,'#5f5f5f');B(8,0,6,4,12,4,'#555555');B(4,12,6,8,12,4,'#7f7f7f');B(0,12,6,4,12,4,'#9e9e9e');B(12,12,6,4,12,4,'#9e9e9e');B(4,24,4,8,8,8,'#bfbfbf')}],
+ cuatro:[16,16,function(B){[[4,2],[10,2],[4,12],[10,12]].forEach(function(p){B(p[0],0,p[1],2,6,2,'#6d4c41')});B(4,6,2,8,6,12,'#8d6e63');B(5,9,12,6,6,4,'#a1887f');B(7,10,0,2,2,2,'#6d4c41')}],
+ ocho:[24,8,function(B){B(8,2,6,8,4,8,'#424242');B(9,2,14,6,4,4,'#616161');[7,9,11,13].forEach(function(z){B(2,4,z,6,1,1,'#212121');B(2,0,z,1,4,1,'#212121');B(16,4,z,6,1,1,'#212121');B(21,0,z,1,4,1,'#212121')})}],
+ pajaro:[16,16,function(B){B(6,0,7,1,4,1,'#fb8c00');B(9,0,7,1,4,1,'#fb8c00');B(6,4,4,4,6,8,'#90a4ae');B(6,8,10,4,4,4,'#b0bec5');B(7,9,14,2,1,2,'#fb8c00');B(2,7,5,4,1,6,'#78909c');B(10,7,5,4,1,6,'#78909c');B(7,5,2,2,1,2,'#78909c')}],
+ fantasmita:[16,24,function(B,V,W){for(var y=3;y<22;y++)for(var z=0;z<16;z++)for(var x=0;x<16;x++){var a=x-7.5,b=z-7.5,r=y>15?Math.sqrt(Math.max(0,36-(y-15)*(y-15)))+0.5:6.5;if(a*a+b*b<=r*r&&(y>4||(x+z)%3))V[(y*W+z)*W+x]='#eceff1'}}],
+ pez:[16,8,function(B){B(5,1,3,6,5,9,'#26a69a');B(6,2,12,4,3,2,'#4db6ac');B(7,2,0,2,4,3,'#00897b');B(7,6,6,2,1,4,'#00897b')}]};
+function tplVox(t){var bd=BODY[t];
+ if(bd){var W1=Math.max(SH.W,bd[0]),H1=Math.max(SH.H,bd[1]),v=emptyVox(bd[0],bd[1]),Wb=bd[0];
+  bd[2](function(x0,y0,z0,w,h,d,c){for(var y=y0;y<y0+h;y++)for(var z=z0;z<z0+d;z++)for(var x=x0;x<x0+w;x++)if(x<Wb&&z<Wb&&y<bd[1])v[(y*Wb+z)*Wb+x]=c},v,Wb);
+  SH.W=W1;SH.H=H1;SH.ox=SH.oz=W1>16?Math.floor((W1-16)/2):0;return resizeVox(v,bd[0],bd[1],W1,H1)}
+ var W0=SH.W,H0=SH.H;SH.W=16;SH.H=16;var v2=tpl16(t);SH.W=W0;SH.H=H0;return resizeVox(v2,16,16,W0,H0)}
 function tpl16(t){var v=emptyVox(16,16),x,y,z;
  if(t==='esfera')for(y=0;y<16;y++)for(z=0;z<16;z++)for(x=0;x<16;x++){var dx=x-7.5,dy=y-7.5,dz=z-7.5;if(dx*dx+dy*dy+dz*dz<=7.6*7.6)v[vi(x,y,z)]=(y>11?'#9ccc65':'#43a047')}
  if(t==='piramide')for(y=0;y<8;y++)for(z=y;z<16-y;z++)for(x=y;x<16-y;x++)v[vi(x,y,z)]=y%2?'#fdd835':'#fb8c00';
@@ -498,7 +510,9 @@ VIEW.shape=function(){var b=function(a,e,t,on){return'<button type="button" clas
  +step('📏 Tamaño','<p style="margin:0 0 6px"><small>Ancho y largo:</small></p><div class="grid">'+SIZES_W.map(function(n){return b('data-xw="'+n+'"',n===16?'🟩':n===24?'🟨':'🟧',n+(n===16?' (1 bloque)':''),SH.W===n)}).join('')+'</div>'
   +'<p style="margin:10px 0 6px"><small>Alto (capas):</small></p><div class="grid">'+SIZES_H.map(function(n){return b('data-xh="'+n+'"','📶',n+' capas',SH.H===n)}).join('')+'</div>'
   +'<p style="margin:8px 0 0"><small>16 = un bloque. '+(SH.W<=BLOCK_MAX&&SH.H<=BLOCK_MAX?'✅ Sirve para bloques y criaturas.':'🐲 De este tamaño sirve solo para criaturas.')+'</small></p>')
- +(SH.i<0&&!SH.vox.some(function(c){return c})?step('¿Empezar con algo?','<div class="grid">'+b('data-xtpl="esfera"','🟢','Esfera',0)+b('data-xtpl="piramide"','🔺','Pirámide',0)+b('data-xtpl="hongo"','🍄','Hongo',0)+b('data-xtpl="mesa"','🪑','Mesa',0)+'</div>'):'')
+ +(SH.i<0&&!SH.vox.some(function(c){return c})?step('¿Empezar con algo?','<p style="margin:0 0 6px"><small>Cuerpos para criaturas (después píntalos a tu manera):</small></p><div class="grid">'
+  +b('data-xtpl="persona"','🧍','Persona',0)+b('data-xtpl="cuatro"','🐕','Cuatro patas',0)+b('data-xtpl="ocho"','🕷️','Ocho patas',0)+b('data-xtpl="pajaro"','🐦','Pájaro',0)+b('data-xtpl="fantasmita"','👻','Fantasmita',0)+b('data-xtpl="pez"','🐟','Pez',0)+'</div>'
+  +'<p style="margin:10px 0 6px"><small>Figuras:</small></p><div class="grid">'+b('data-xtpl="esfera"','🟢','Esfera',0)+b('data-xtpl="piramide"','🔺','Pirámide',0)+b('data-xtpl="hongo"','🍄','Hongo',0)+b('data-xtpl="mesa"','🪑','Mesa',0)+'</div>'):'')
  +'<div class="card" style="text-align:center"><canvas id="x3d" width="640" height="560" style="width:100%;max-width:360px;touch-action:none;background:#dfeefa;border:3px solid #2b2118;border-radius:6px"></canvas><p style="margin:4px 0 0"><small>👆 Arrastra para girar</small></p></div>'
  +'<div class="card"><div style="display:flex;align-items:center;justify-content:space-between;gap:8px"><button class="btn alt" style="flex:1;margin:0" data-xdown="1">⬇️ Bajar</button><b style="text-align:center;min-width:90px">Capa '+(L+1)+' de '+SH.H+'<br><small>'+(L===0?'(el piso)':L===SH.H-1?'(lo más alto)':'')+'</small></b><button class="btn alt" style="flex:1;margin:0" data-xup="1">⬆️ Subir</button></div>'
  +'<p style="text-align:center;margin:8px 0 4px"><small>⬆️ atrás · ⬇️ frente · transparente = capa de abajo</small></p>'

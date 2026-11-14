@@ -55,7 +55,7 @@ En la criatura, "🎨 Píntala tú": se elige parte (cabeza, cuerpo, brazos, pie
 
 ## Formas 3D
 
-En la portada, "🧊 Formas 3D": se construye una figura con cubitos, capa por capa. El tamaño se elige: ancho 16, 24 o 32 y alto 16, 24, 32, 48 o 64 capas (16 = un bloque). Si es más ancha que 16, la cuadrícula muestra una ventana de 16×16 que se mueve con flechas, con un mapa chico de la capa entera (como construir en Minecraft). Se ve la capa de abajo en transparente y una vista 3D que se gira con el dedo. Herramientas: poner, quitar, rellenar, copiar color, espejo, deshacer, copiar capa de abajo y vaciar capa. Hay plantillas para empezar (esfera, pirámide, hongo, mesa).
+En la portada, "🧊 Formas 3D": se construye una figura con cubitos, capa por capa. El tamaño se elige: ancho 16, 24 o 32 y alto 16, 24, 32, 48 o 64 capas (16 = un bloque). Si es más ancha que 16, la cuadrícula muestra una ventana de 16×16 que se mueve con flechas, con un mapa chico de la capa entera (como construir en Minecraft). Se ve la capa de abajo en transparente y una vista 3D que se gira con el dedo. Herramientas: poner, quitar, rellenar, copiar color, espejo, deshacer, copiar capa de abajo y vaciar capa. Hay plantillas para empezar: cuerpos de referencia para criaturas (persona, cuatro patas, ocho patas, pájaro, fantasmita, pez), con proporciones en bloques pero sin copiar personajes de Minecraft, y figuras (esfera, pirámide, hongo, mesa). Para usar los modelos reales de Minecraft (zombi, creeper, wither…), en la criatura se elige "Modelo de Minecraft" en vez de una forma 3D.
 
 Las formas se usan en:
 - **Bloques**: el bloque toma esa figura. Minecraft solo deja bloques de hasta 30 píxeles, así que los bloques aceptan formas de hasta 24×24×24.

@@ -55,11 +55,11 @@ En la criatura, "🎨 Píntala tú": se elige parte (cabeza, cuerpo, brazos, pie
 
 ## Formas 3D
 
-En la portada, "🧊 Formas 3D": se construye una figura con cubitos en una cuadrícula de 16×16×16, capa por capa (como construir en Minecraft). Se ve la capa de abajo en transparente y una vista 3D que se gira con el dedo. Herramientas: poner, quitar, rellenar, copiar color, espejo, deshacer, copiar capa de abajo y vaciar capa. Hay plantillas para empezar (esfera, pirámide, hongo, mesa).
+En la portada, "🧊 Formas 3D": se construye una figura con cubitos, capa por capa. El tamaño se elige: ancho 16, 24 o 32 y alto 16, 24, 32, 48 o 64 capas (16 = un bloque). Si es más ancha que 16, la cuadrícula muestra una ventana de 16×16 que se mueve con flechas, con un mapa chico de la capa entera (como construir en Minecraft). Se ve la capa de abajo en transparente y una vista 3D que se gira con el dedo. Herramientas: poner, quitar, rellenar, copiar color, espejo, deshacer, copiar capa de abajo y vaciar capa. Hay plantillas para empezar (esfera, pirámide, hongo, mesa).
 
 Las formas se usan en:
-- **Bloques**: el bloque toma esa figura (cabe exactamente en un bloque).
-- **Criaturas**: la criatura tiene esa figura; el tamaño se ajusta con la opción de tamaño.
+- **Bloques**: el bloque toma esa figura. Minecraft solo deja bloques de hasta 30 píxeles, así que los bloques aceptan formas de hasta 24×24×24.
+- **Criaturas**: cualquier tamaño (64 capas = 4 bloques de alto); además se puede agrandar con la opción de tamaño.
 
 La app convierte los cubitos en un modelo 3D de Minecraft (geometría con cajas unidas) y una textura con los colores.
 

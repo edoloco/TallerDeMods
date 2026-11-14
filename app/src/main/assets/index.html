@@ -85,13 +85,14 @@ function valList(a){
 var VALDEF={efecto:'speed',dar:'minecraft:diamond',invocar:'minecraft:zombie',sonido:'random.levelup',particula:'minecraft:heart_particle'};
 function ruleText(r){var tr=TRIG.filter(function(x){return x[0]===r.trig})[0],ac=ACT.filter(function(x){return x[0]===r.act})[0];return tr[1]+' '+tr[2]+(r.subj?' ('+esc(nm(r.subj))+')':'')+' → '+ac[1]+' '+ac[2]}
 function dflt(){return{
- mob:{name:'',base:'zombie',size:'normal',str:'normal',spd:'normal',mode:'hostil',pw:[],egg:'1',wild:'',freq:'normal',c1:'#43a047',c2:'#212121',loot:[],ing:[]},
- block:{name:'',color:'#1e88e5',light:'0',hard:'normal',ing:[]},
+ mob:{name:'',base:'zombie',size:'normal',str:'normal',spd:'normal',mode:'hostil',pw:[],egg:'1',wild:'',freq:'normal',c1:'#43a047',c2:'#212121',loot:[],ing:[],shape:''},
+ block:{name:'',color:'#1e88e5',light:'0',hard:'normal',ing:[],shape:''},
  item:{name:'',kind:'espada',color:'#e53935',power:'normal',glow:'0',ing:[],use:'',hit:'',eat:''},
  rule:{trig:'usar',subj:'',act:'mensaje',who:'player',val:'',amt:'medio',lvl:'suave',brk:'0',text:'¡Hola!',every:'10'},
  draw:{kind:'item',px:[],tool:'lapiz',col:'#e53935',mir:false,hist:[]}}}
 var S=dflt(),P={name:'Mi addon',mobs:[],blocks:[],items:[],rules:[]},scr='home',MSG='';
 try{var sv=localStorage.getItem('tallerP');if(sv)P=Object.assign(P,JSON.parse(sv))}catch(e){}
+P.shapes=P.shapes||[];
 function saveP(){try{localStorage.setItem('tallerP',JSON.stringify(P))}catch(e){}}
 
 function obj(g){return g[0]==='P'?P:S[g[0]]}
@@ -107,7 +108,7 @@ function btn(c,t,a){return'<button class="btn '+c+'" '+a+'>'+t+'</button>'}
 var RECIPE=function(k){return step('¿Cómo se fabrica? (opcional, hasta 3 cosas)',opts(k+'.ing',ING,1,3))};
 
 var VIEW={
-home:function(){var n=P.mobs.length+P.blocks.length+P.items.length+P.rules.length;return'<h1>⛏️ Taller de Mods</h1><p>¡Crea tus propias cosas para Minecraft!</p>'+btn('','🐲 Crear una criatura','data-go="mob"')+btn('blue','🧱 Crear un bloque','data-go="block"')+btn('alt','⚔️ Crear un objeto','data-go="item"')+btn('pur','🧠 Crear una regla (magia)','data-go="rule"')+btn('','📦 Mi addon ('+n+' cosas)','data-go="mine"')+updBox()},
+home:function(){var n=P.mobs.length+P.blocks.length+P.items.length+P.rules.length;return'<h1>⛏️ Taller de Mods</h1><p>¡Crea tus propias cosas para Minecraft!</p>'+btn('','🐲 Crear una criatura','data-go="mob"')+btn('blue','🧱 Crear un bloque','data-go="block"')+btn('alt','⚔️ Crear un objeto','data-go="item"')+btn('pur','🧠 Crear una regla (magia)','data-go="rule"')+btn('blue','🧊 Formas 3D ('+P.shapes.length+')','data-go="shapes"')+btn('','📦 Mi addon ('+n+' cosas)','data-go="mine"')+updBox()},
 mob:function(){return head('🐲 Criatura')
  +step('1. ¿Cómo se llama?',txt('mob.name','Ej: Dragón de lava'))
  +step('2. ¿Cómo se ve?',opts('mob.base',CR))
@@ -117,12 +118,12 @@ mob:function(){return head('🐲 Criatura')
  +step('6. ¿Cómo se porta?',opts('mob.mode',[['hostil','😈','Malvado: te ataca'],['neutral','😠','Se defiende'],['pasivo','😊','Amigable: huye']]))
  +step('7. Poderes (hasta 4)',opts('mob.pw',PW,1,4))
  +step('8. ¿Cómo aparece?','<p><small>Siempre podrás invocarlo con un comando.</small></p>'+opts('mob.egg',[['1','🥚','Con huevo'],['0','🚫','Sin huevo']])+'<p><b>¿Aparece solo en el mundo?</b></p>'+opts('mob.wild',WILD)+(S.mob.wild?'<p><b>¿Cuántos?</b></p>'+opts('mob.freq',[['raro','🍀','Pocos'],['normal','🙂','Normal'],['mucho','🎉','Muchos']]):''))
- +skinStep()+step('9. Colores del huevo','<div class="half"><input type="color" data-i="mob.c1" value="'+S.mob.c1+'"><input type="color" data-i="mob.c2" value="'+S.mob.c2+'"></div>')
+ +shapeChoice('mob')+(S.mob.shape&&shapeById(S.mob.shape)?'':skinStep())+step('9. Colores del huevo','<div class="half"><input type="color" data-i="mob.c1" value="'+S.mob.c1+'"><input type="color" data-i="mob.c2" value="'+S.mob.c2+'"></div>')
  +step('10. ¿Qué suelta al morir? (hasta 3)',opts('mob.loot',LOOT,1,3))
  +btn('','✅ ¡Crear criatura!','data-make="mob"')},
 block:function(){return head('🧱 Bloque')
  +step('1. ¿Cómo se llama?',txt('block.name','Ej: Bloque de hielo'))
- +step('2. ¿De qué color?',swatches('block.color'))
+ +step('2. ¿De qué color?',swatches('block.color'))+shapeChoice('block')
  +step('3. ¿Brilla?',opts('block.light',[['0','🌑','No'],['7','💡','Un poco'],['15','☀️','Mucho']]))
  +step('4. ¿Qué tan duro es?',opts('block.hard',[['blando','🧽','Blando'],['normal','🪨','Normal'],['duro','⛓️','Duro'],['durisimo','💎','Durísimo']]))
  +drawStep('block')+RECIPE('block')+btn('','✅ ¡Crear bloque!','data-make="block"')},
@@ -167,7 +168,7 @@ mine:function(){var L=function(key,e){return P[key].map(function(o,i){return'<di
  +'<li>Si ves paquetes viejos llamados “BP” o “RP”, desactívalos. Puedes borrarlos en Configuración → Almacenamiento.</li>'
  +'<li>Si usas reglas o poderes: en el mundo activa <b>Experimentos → API beta</b> solo si Minecraft lo pide.</li></ol></div>'}
 };
-function render(){var y=window.scrollY;$('app').innerHTML=(MSG?'<div class="toast">'+esc(MSG)+'</div>':'')+VIEW[scr]();window.scrollTo(0,y);if(scr==='draw')drawInit();if(scr==='skin')skinInit();if(scr==='mob')skinThumb()}
+function render(){var y=window.scrollY;$('app').innerHTML=(MSG?'<div class="toast">'+esc(MSG)+'</div>':'')+VIEW[scr]();window.scrollTo(0,y);if(scr==='draw')drawInit();if(scr==='skin')skinInit();if(scr==='mob')skinThumb();if(scr==='shape')shapeInit();if(scr==='shapes'||scr==='mob'||scr==='block')shapeThumbs()}
 function go(s){scr=s;MSG='';render();window.scrollTo(0,0)}
 function toast(m){MSG=m;render();window.scrollTo(0,0)}
 
@@ -305,7 +306,8 @@ function ITEMRT(world,system,IT){
 }
 function genScript(){var rs=P.rules.map(function(r){var o=ruleCmd(r);return{t:r.trig,s:r.subj,w:r.who,e:+r.every||10,k:o.k,c:o.c,r:o.r,b:o.b}});
  return'import { world, system } from "@minecraft/server";\nvar R = '+JSON.stringify(rs)+';\nvar IT = '+JSON.stringify(itemPowerList())+';\n('+RUNTIME.toString()+')(world, system, R);\n('+ITEMRT.toString()+')(world, system, IT);\n'}
-async function build(){
+var USED={};function useShape(sh){USED[sh.id]=sh}
+async function build(){USED={};
  if(!P.pk)P.pk={b:uuid(),r:uuid(),bm:uuid(),rm:uuid(),sm:uuid(),v:0};P.pk.v++;saveP();var VER=[1,0,P.pk.v];
  var name=P.name.trim()||'Mi addon',zip=new JSZip(),bp=zip.folder(name+' BP'),rp=zip.folder(name+' RP'),bH=P.pk.b,rH=P.pk.r,lang='';
  var mf=function(n,d,u,t,dep,mu){return{format_version:2,header:{name:name+n+' (v'+P.pk.v+')',description:d,uuid:u,version:VER,min_engine_version:[1,21,0]},modules:[{type:t,uuid:mu,version:VER}],dependencies:[{uuid:dep,version:VER}]}};
@@ -315,8 +317,10 @@ async function build(){
  rp.file('manifest.json',JSON.stringify(mf(' - Apariencia','Texturas y dibujos. Debe estar ACTIVO en el mundo.',rH,'resources',bH,P.pk.rm),null,2));
  P.mobs.forEach(function(o){var m=mobParams(o),full=NS+':'+m.id,b=MOBS.filter(function(x){return x.k===m.base})[0]||MOBS[0],d=JSON.parse(JSON.stringify(b.d));
   d.identifier=full;d.spawn_egg={base_color:o.c1.toUpperCase(),overlay_color:o.c2.toUpperCase()};if(o.skin){d=humanoidClient('textures/entity/'+NS+'_'+m.id);d.identifier=full;d.spawn_egg={base_color:o.c1.toUpperCase(),overlay_color:o.c2.toUpperCase()};rp.file('textures/entity/'+NS+'_'+m.id+'.png',o.skin,{base64:true})}
+  var shm=o.shape&&shapeById(o.shape);
+  if(shm){useShape(shm);d={identifier:full,materials:{default:'entity_alphatest'},textures:{default:'textures/entity/shape_'+shm.id},geometry:{default:'geometry.'+NS+'_shape_'+shm.id},render_controllers:['controller.render.default'],spawn_egg:{base_color:o.c1.toUpperCase(),overlay_color:o.c2.toUpperCase()}}}
   bp.file('entities/'+m.id+'.json',JSON.stringify(mobEnt(m,o.egg!=='0'),null,2));
-  rp.file('entity/'+m.id+'.entity.json',JSON.stringify({format_version:o.skin?'1.10.0':b.v,'minecraft:client_entity':{description:d}},null,2));
+  rp.file('entity/'+m.id+'.entity.json',JSON.stringify({format_version:(o.skin||shm)?'1.10.0':b.v,'minecraft:client_entity':{description:d}},null,2));
   if(o.wild)bp.file('spawn_rules/'+m.id+'.json',JSON.stringify(spawnRule(m.id,o.wild,o.freq,o.mode==='pasivo'?'animal':'monster'),null,2));
   if(m.loot)bp.file('loot_tables/'+NS+'/'+m.loot+'.json',JSON.stringify({pools:[{rolls:1,entries:o.loot.map(function(i){return{type:'item',name:'minecraft:'+i,weight:1,functions:[{function:'set_count',count:{min:1,max:3}}]}})}]},null,2));
   lang+='entity.'+full+'.name='+o.name+'\nitem.spawn_egg.entity.'+full+'.name=Huevo de '+o.name+'\n';recipe(bp,o)});
@@ -330,8 +334,12 @@ async function build(){
  if(P.items.length)rp.file('textures/item_texture.json',JSON.stringify({resource_pack_name:name,texture_name:'atlas.items',texture_data:it},null,2));
  P.blocks.forEach(function(o){
   bp.file('blocks/'+o.id+'.json',JSON.stringify({format_version:'1.21.0','minecraft:block':{description:{identifier:NS+':'+o.id,menu_category:{category:'construction'}},components:{'minecraft:destructible_by_mining':{seconds_to_destroy:{blando:1,normal:3,duro:10,durisimo:50}[o.hard]||3},'minecraft:light_emission':+o.light||0,'minecraft:material_instances':{'*':{texture:'b_'+o.id,render_method:'opaque'}}}}},null,2));
+  var shb=o.shape&&shapeById(o.shape);
+  if(shb){useShape(shb);var comp={'minecraft:destructible_by_mining':{seconds_to_destroy:{blando:1,normal:3,duro:10,durisimo:50}[o.hard]||3},'minecraft:light_emission':+o.light||0,'minecraft:geometry':'geometry.'+NS+'_shape_'+shb.id,'minecraft:material_instances':{'*':{texture:'s_'+shb.id,render_method:'alpha_test'}}};
+   bp.file('blocks/'+o.id+'.json',JSON.stringify({format_version:'1.21.0','minecraft:block':{description:{identifier:NS+':'+o.id,menu_category:{category:'construction'}},components:comp}},null,2));tt['s_'+shb.id]={textures:'textures/entity/shape_'+shb.id}}
   tt['b_'+o.id]={textures:'textures/blocks/'+o.id};rp.file('textures/blocks/'+o.id+'.png',o.tex||icon('',o.color,1),{base64:true});lang+='tile.'+NS+':'+o.id+'.name='+o.name+'\n';recipe(bp,o)});
  if(P.blocks.length)rp.file('textures/terrain_texture.json',JSON.stringify({resource_pack_name:name,texture_name:'atlas.terrain',padding:8,num_mip_levels:4,texture_data:tt},null,2));
+ Object.keys(USED).forEach(function(k){var sh=USED[k],g=shapeGeometry(sh);rp.file('models/entity/shape_'+sh.id+'.geo.json',JSON.stringify(g.geo,null,1));rp.file('textures/entity/shape_'+sh.id+'.png',g.png,{base64:true})});
  bp.file('pack_icon.png',packIcon('#4caf3a','⚙️'),{base64:true});rp.file('pack_icon.png',packIcon('#e8870e','🎨'),{base64:true});
  if(P.blocks.length){var bj={format_version:[1,1,0]};P.blocks.forEach(function(o){bj[NS+':'+o.id]={sound:'stone'}});rp.file('blocks.json',JSON.stringify(bj,null,2))}
  rp.file('texts/languages.json',JSON.stringify(['es_ES','en_US']));rp.file('texts/es_ES.lang',lang);rp.file('texts/en_US.lang',lang);
@@ -454,6 +462,121 @@ document.addEventListener('click',function(e){var t=e.target.closest('button');i
  if(d.scopy){SK.hist.push(SK.px.slice());var f=SKP[SK.part].f.frente[0],b2=SKP[SK.part].f.espalda[0];for(var j=0;j<f[3];j++)for(var k=0;k<f[2];k++)SK.px[(b2[1]+j)*64+b2[0]+k]=SK.px[(f[1]+j)*64+f[0]+k];toast('🔁 Copié el frente a la espalda');return}
  if(d.ssave)return skinSave()});
 document.addEventListener('change',function(e){if(e.target.dataset.scol){SK.col=e.target.value;if(SK.tool==='gotero')SK.tool='lapiz';render()}});
+
+// ---------- Formas 3D (cubitos 16x16x16, capa por capa) ----------
+var N3=16,SH={i:-1,name:'',vox:[],layer:0,tool:'lapiz',col:'#8b5a2b',mir:false,hist:[],yaw:0.75,pitch:0.45};
+function vi(x,y,z){return y*256+z*16+x}
+function shapeById(id){for(var i=0;i<P.shapes.length;i++)if(P.shapes[i].id===id)return P.shapes[i];return null}
+function shapeEncode(vox){var pal=[],d='';for(var i=0;i<vox.length;i++){var c=vox[i];if(!c){d+='.';continue}var k=pal.indexOf(c);if(k<0){if(pal.length<64){pal.push(c);k=pal.length-1}else k=pal.length-1}d+=String.fromCharCode(48+k)}return{pal:pal,d:d}}
+function shapeDecode(sh){var v=[];for(var i=0;i<4096;i++){var ch=sh.d.charAt(i);v.push(ch==='.'||!ch?'':sh.pal[ch.charCodeAt(0)-48]||'')}return v}
+function emptyVox(){var v=[];for(var i=0;i<4096;i++)v.push('');return v}
+function tplVox(t){var v=emptyVox(),x,y,z;
+ if(t==='esfera')for(y=0;y<16;y++)for(z=0;z<16;z++)for(x=0;x<16;x++){var dx=x-7.5,dy=y-7.5,dz=z-7.5;if(dx*dx+dy*dy+dz*dz<=7.6*7.6)v[vi(x,y,z)]=(y>11?'#9ccc65':'#43a047')}
+ if(t==='piramide')for(y=0;y<8;y++)for(z=y;z<16-y;z++)for(x=y;x<16-y;x++)v[vi(x,y,z)]=y%2?'#fdd835':'#fb8c00';
+ if(t==='hongo'){for(y=0;y<7;y++)for(z=6;z<10;z++)for(x=6;x<10;x++)v[vi(x,y,z)]='#f5f0dc';
+  for(y=7;y<12;y++){var r=y<10?7:(y===10?5:3);for(z=0;z<16;z++)for(x=0;x<16;x++){var a=x-7.5,b=z-7.5;if(a*a+b*b<=r*r+1)v[vi(x,y,z)]=((x*7+z*3+y)%9===0)?'#ffffff':'#e53935'}}}
+ if(t==='mesa'){for(z=1;z<15;z++)for(x=1;x<15;x++){v[vi(x,8,z)]='#8b5a2b';v[vi(x,9,z)]='#c69c6d'}
+  [[2,2],[2,12],[12,2],[12,12]].forEach(function(p){for(y=0;y<8;y++)for(z=p[1];z<p[1]+2;z++)for(x=p[0];x<p[0]+2;x++)v[vi(x,y,z)]='#5b3a1e'})}
+ return v}
+function shapeChoice(kind){var e=kind==='mob'?'🐲':'🧱';
+ if(!P.shapes.length)return step('🧊 Forma 3D (opcional)','<p><small>Con una forma 3D tu '+(kind==='mob'?'criatura':'bloque')+' puede tener la figura que tú construyas.</small></p>'+btn('blue','🧊 Crear una forma 3D','data-xnew="1"'));
+ return step('🧊 Forma 3D (opcional)',opts(kind+'.shape',[['',e,kind==='mob'?'Modelo de Minecraft':'Cubo normal']].concat(P.shapes.map(function(sh){return[sh.id,'<canvas class="xth" data-sh="'+sh.id+'" width="56" height="56" style="width:40px;height:40px"></canvas>',esc(sh.name)]})))
+  +(kind==='mob'&&S.mob.shape?'<p><small>Con una forma 3D la criatura no se pinta: los colores vienen de la forma.</small></p>':''))}
+VIEW.shapes=function(){var L=P.shapes.map(function(sh,i){return'<div class="row"><span style="display:flex;align-items:center;gap:10px"><canvas class="xth" data-sh="'+sh.id+'" width="72" height="72" style="width:54px;height:54px"></canvas><b>'+esc(sh.name)+'</b></span><span style="display:flex;gap:6px;flex:none"><button class="del" data-xedit="'+i+'" aria-label="Cambiar">✏️</button><button class="del" data-xdel="'+i+'" aria-label="Borrar">🗑️</button></span></div>'}).join('');
+ return head('🧊 Formas 3D')+'<div class="card"><p>Construye figuras con cubitos, capa por capa, como en Minecraft. Después úsalas en tus <b>bloques</b> y <b>criaturas</b>.</p></div>'
+  +btn('','➕ Nueva forma','data-xnew="1"')+'<div class="card">'+(L||'<p>Todavía no tienes formas.</p>')+'</div>'};
+VIEW.shape=function(){var b=function(a,e,t,on){return'<button type="button" class="opt'+(on?' on':'')+'" '+a+'><span class="e">'+e+'</span>'+t+'</button>'},L=SH.layer;
+ return'<div class="top"><button class="back" data-xback="1">⬅️</button><h1>🧊 '+(SH.i<0?'Nueva forma':'Cambiar forma')+'</h1></div>'
+ +step('1. ¿Cómo se llama?','<input type="text" maxlength="30" data-xname="1" placeholder="Ej: Silla, Cohete, Árbol" value="'+esc(SH.name)+'">')
+ +(SH.i<0&&!SH.vox.some(function(c){return c})?step('¿Empezar con algo?','<div class="grid">'+b('data-xtpl="esfera"','🟢','Esfera',0)+b('data-xtpl="piramide"','🔺','Pirámide',0)+b('data-xtpl="hongo"','🍄','Hongo',0)+b('data-xtpl="mesa"','🪑','Mesa',0)+'</div>'):'')
+ +'<div class="card" style="text-align:center"><canvas id="x3d" width="640" height="560" style="width:100%;max-width:360px;touch-action:none;background:#dfeefa;border:3px solid #2b2118;border-radius:6px"></canvas><p style="margin:4px 0 0"><small>👆 Arrastra para girar</small></p></div>'
+ +'<div class="card"><div style="display:flex;align-items:center;justify-content:space-between;gap:8px"><button class="btn alt" style="flex:1;margin:0" data-xdown="1">⬇️ Bajar</button><b style="text-align:center;min-width:90px">Capa '+(L+1)+' de 16<br><small>'+(L===0?'(el piso)':L===15?'(lo más alto)':'')+'</small></b><button class="btn alt" style="flex:1;margin:0" data-xup="1">⬆️ Subir</button></div>'
+ +'<p style="text-align:center;margin:8px 0 4px"><small>⬆️ atrás · ⬇️ frente · transparente = capa de abajo</small></p>'
+ +'<canvas id="xlay" width="320" height="320" style="width:100%;max-width:340px;display:block;margin:0 auto;touch-action:none;-webkit-user-select:none;user-select:none;border:3px solid #2b2118;border-radius:4px"></canvas></div>'
+ +step('Herramienta','<div class="grid">'+[['lapiz','✏️','Poner'],['goma','🧽','Quitar'],['balde','🪣','Rellenar'],['gotero','💧','Copiar color']].map(function(t){return b('data-xt="'+t[0]+'"',t[1],t[2],SH.tool===t[0])}).join('')
+  +b('data-xmir="1"','🦋','Espejo',SH.mir)+b('data-xundo="1"','↩️','Deshacer',0)+b('data-xcopy="1"','📋','Copiar capa de abajo',0)+b('data-xclear="1"','🗑️','Vaciar capa',0)+'</div>')
+ +step('Color','<div class="grid" style="grid-template-columns:repeat(6,1fr)">'+PAL.map(function(c){return'<button type="button" class="sw'+(SH.col===c?' on':'')+'" style="height:40px;background:'+c+'" data-xc="'+c+'" aria-label="Color"></button>'}).join('')+'</div>'
+  +'<p><small>¿Otro color?</small></p><input type="color" data-xcol="1" value="'+SH.col+'">')
+ +btn('','✅ ¡Guardar forma!','data-xsave="1"')};
+// --- dibujo 3D con perspectiva simple (pintor) ---
+var FACES=[[1,0,0,0.8],[-1,0,0,0.7],[0,1,0,1],[0,-1,0,0.45],[0,0,1,0.88],[0,0,-1,0.6]];
+function shadeHex(h,f){var n=parseInt(h.slice(1),16);return'rgb('+Math.min(255,(n>>16)*f|0)+','+Math.min(255,(n>>8&255)*f|0)+','+Math.min(255,(n&255)*f|0)+')'}
+function render3d(cv,vox,yaw,pitch,layer){if(!cv)return;var x=cv.getContext('2d'),W=cv.width,H=cv.height;x.clearRect(0,0,W,H);
+ var cy=Math.cos(yaw),sy=Math.sin(yaw),cp=Math.cos(pitch),sp=Math.sin(pitch),sc=Math.min(W,H)/26;
+ function P3(px,py,pz){px-=8;py-=8;pz-=8;var X=cy*px+sy*pz,Z=-sy*px+cy*pz,Y=cp*py-sp*Z,Z2=sp*py+cp*Z,k=1/(1-Z2/60);return[W/2+X*sc*k,H/2+12-Y*sc*k,Z2]}
+ function rot(n){var X=cy*n[0]+sy*n[2],Z=-sy*n[0]+cy*n[2];return sp*n[1]+cp*Z}
+ // piso
+ x.strokeStyle='rgba(43,33,24,.25)';x.lineWidth=1;x.beginPath();for(var g=0;g<=16;g+=2){var a=P3(g,0,0),b=P3(g,0,16),c=P3(0,0,g),d=P3(16,0,g);x.moveTo(a[0],a[1]);x.lineTo(b[0],b[1]);x.moveTo(c[0],c[1]);x.lineTo(d[0],d[1])}x.stroke();
+ var vis=FACES.map(function(f){return rot(f)>0.001}),Q=[];
+ for(var yy=0;yy<16;yy++)for(var zz=0;zz<16;zz++)for(var xx=0;xx<16;xx++){var c0=vox[vi(xx,yy,zz)];if(!c0)continue;
+  for(var f=0;f<6;f++){if(!vis[f])continue;var F=FACES[f],nx=xx+F[0],ny=yy+F[1],nz=zz+F[2];if(nx>=0&&nx<16&&ny>=0&&ny<16&&nz>=0&&nz<16&&vox[vi(nx,ny,nz)])continue;
+   var pts;if(F[0])pts=[[0,0,0],[0,1,0],[0,1,1],[0,0,1]].map(function(p){return[xx+(F[0]>0?1:0),yy+p[1],zz+p[2]]});
+   else if(F[1])pts=[[0,0],[1,0],[1,1],[0,1]].map(function(p){return[xx+p[0],yy+(F[1]>0?1:0),zz+p[1]]});
+   else pts=[[0,0],[1,0],[1,1],[0,1]].map(function(p){return[xx+p[0],yy+p[1],zz+(F[2]>0?1:0)]});
+   var pr=pts.map(function(p){return P3(p[0],p[1],p[2])});Q.push([(pr[0][2]+pr[1][2]+pr[2][2]+pr[3][2])/4,pr,shadeHex(c0,F[3]*(layer!=null&&yy>layer?0.55:1))])}}
+ Q.sort(function(a,b){return a[0]-b[0]});
+ for(var i=0;i<Q.length;i++){var q=Q[i],p=q[1];x.fillStyle=q[2];x.beginPath();x.moveTo(p[0][0],p[0][1]);for(var j=1;j<4;j++)x.lineTo(p[j][0],p[j][1]);x.closePath();x.fill();x.strokeStyle='rgba(0,0,0,.18)';x.stroke()}
+ if(layer!=null){var L=layer,c1=P3(0,L,0),c2=P3(16,L,0),c3=P3(16,L,16),c4=P3(0,L,16);x.strokeStyle='#8e24aa';x.lineWidth=3;x.setLineDash([8,6]);x.beginPath();x.moveTo(c1[0],c1[1]);x.lineTo(c2[0],c2[1]);x.lineTo(c3[0],c3[1]);x.lineTo(c4[0],c4[1]);x.closePath();x.stroke();x.setLineDash([]);
+  var f1=P3(8,0,17);x.fillStyle='#2b2118';x.font='bold 22px sans-serif';x.textAlign='center';x.fillText('▼ frente',f1[0],Math.min(H-8,f1[1]+16))}}
+function drawLayer(){var c=$('xlay');if(!c)return;var x=c.getContext('2d'),z=20,L=SH.layer;
+ for(var zz=0;zz<16;zz++)for(var xx=0;xx<16;xx++){var v=SH.vox[vi(xx,L,zz)],u=L>0?SH.vox[vi(xx,L-1,zz)]:'';
+  x.fillStyle=((xx+zz)%2)?'#f4f4f4':'#ffffff';x.fillRect(xx*z,zz*z,z,z);
+  if(u){x.globalAlpha=0.28;x.fillStyle=u;x.fillRect(xx*z,zz*z,z,z);x.globalAlpha=1}
+  if(v){x.fillStyle=v;x.fillRect(xx*z+1,zz*z+1,z-2,z-2)}}
+ x.strokeStyle='rgba(0,0,0,.18)';x.lineWidth=1;x.beginPath();for(var k=1;k<16;k++){x.moveTo(k*z+.5,0);x.lineTo(k*z+.5,320);x.moveTo(0,k*z+.5);x.lineTo(320,k*z+.5)}x.stroke();
+ if(SH.mir){x.strokeStyle='rgba(142,68,173,.85)';x.lineWidth=3;x.beginPath();x.moveTo(160,0);x.lineTo(160,320);x.stroke()}
+ render3d($('x3d'),SH.vox,SH.yaw,SH.pitch,SH.layer)}
+function layerAt(cx,cz){var L=SH.layer,i=vi(cx,L,cz);
+ if(SH.tool==='gotero'){if(SH.vox[i]){SH.col=SH.vox[i];SH.tool='lapiz';render()}return}
+ if(SH.tool==='balde'){var from=SH.vox[i],to=SH.col;if(from===to)return;var q=[[cx,cz]],seen={};while(q.length){var p=q.pop(),k=p.join();if(seen[k]||p[0]<0||p[1]<0||p[0]>15||p[1]>15)continue;seen[k]=1;var j=vi(p[0],L,p[1]);if(SH.vox[j]!==from)continue;SH.vox[j]=to;if(SH.mir)SH.vox[vi(15-p[0],L,p[1])]=to;q.push([p[0]+1,p[1]],[p[0]-1,p[1]],[p[0],p[1]+1],[p[0],p[1]-1])}drawLayer();return}
+ var v=SH.tool==='goma'?'':SH.col;SH.vox[i]=v;if(SH.mir)SH.vox[vi(15-cx,L,cz)]=v;drawLayer()}
+function shapeInit(){var c=$('xlay'),t=$('x3d');if(!c)return;drawLayer();var down=false,last='';
+ function cell(e){var r=c.getBoundingClientRect();return[Math.max(0,Math.min(15,Math.floor((e.clientX-r.left)/r.width*16))),Math.max(0,Math.min(15,Math.floor((e.clientY-r.top)/r.height*16)))]}
+ c.addEventListener('pointerdown',function(e){e.preventDefault();down=true;try{c.setPointerCapture(e.pointerId)}catch(x){}SH.hist.push(SH.vox.slice());if(SH.hist.length>30)SH.hist.shift();var p=cell(e);last=p.join();layerAt(p[0],p[1])});
+ c.addEventListener('pointermove',function(e){if(!down||(SH.tool!=='lapiz'&&SH.tool!=='goma'))return;var p=cell(e);if(p.join()!==last){last=p.join();layerAt(p[0],p[1])}});
+ ['pointerup','pointercancel','pointerleave'].forEach(function(n){c.addEventListener(n,function(){down=false})});
+ var rd=false,lx=0,ly=0,raf=0;
+ t.addEventListener('pointerdown',function(e){e.preventDefault();rd=true;lx=e.clientX;ly=e.clientY;try{t.setPointerCapture(e.pointerId)}catch(x){}});
+ t.addEventListener('pointermove',function(e){if(!rd)return;SH.yaw-=(e.clientX-lx)*0.012;SH.pitch=Math.max(-0.2,Math.min(1.45,SH.pitch+(e.clientY-ly)*0.01));lx=e.clientX;ly=e.clientY;
+  if(!raf)raf=requestAnimationFrame(function(){raf=0;render3d(t,SH.vox,SH.yaw,SH.pitch,SH.layer)})});
+ ['pointerup','pointercancel'].forEach(function(n){t.addEventListener(n,function(){rd=false})})}
+function shapeThumbs(){var cs=document.querySelectorAll('canvas.xth');for(var i=0;i<cs.length;i++){var sh=shapeById(cs[i].dataset.sh);if(sh)render3d(cs[i],shapeDecode(sh),0.75,0.45,null)}}
+function openShape(i){SH.i=i;SH.layer=0;SH.hist=[];SH.tool='lapiz';SH.mir=false;SH.yaw=0.75;SH.pitch=0.45;
+ if(i<0){SH.name='';SH.vox=emptyVox()}else{SH.name=P.shapes[i].name;SH.vox=shapeDecode(P.shapes[i])}SH.from=scr;go('shape')}
+function saveShape(){var nm=(SH.name||'').trim();if(!nm)return toast('¡Ponle un nombre a tu forma! ✏️');if(!SH.vox.some(function(c){return c}))return toast('Pon al menos un cubito 🧊');
+ var e=shapeEncode(SH.vox),id=slug(nm,'forma'),o={name:nm,id:id,pal:e.pal,d:e.d};
+ if(SH.i>=0){var old=P.shapes[SH.i].id;o.id=old;P.shapes[SH.i]=o}else{var k=2,base=id;while(shapeById(id)){id=base+'_'+k;k++}o.id=id;P.shapes.push(o)}
+ saveP();var back=SH.from==='mob'||SH.from==='block'?SH.from:'shapes';if(back!=='shapes')S[back].shape=o.id;scr=back;toast('🧊 ¡Forma guardada! '+(back==='shapes'?'Úsala en un bloque o criatura.':''))}
+// geometría Bedrock: cajas unidas (greedy) y paleta de colores como textura
+function shapeBoxes(vox){var used=[],boxes=[],x,y,z;for(var i=0;i<4096;i++)used.push(false);
+ for(y=0;y<16;y++)for(z=0;z<16;z++)for(x=0;x<16;x++){var i0=vi(x,y,z),c=vox[i0];if(!c||used[i0])continue;
+  var w=1;while(x+w<16&&vox[vi(x+w,y,z)]===c&&!used[vi(x+w,y,z)])w++;
+  var d=1,ok;while(z+d<16){ok=true;for(var a=0;a<w;a++){var j=vi(x+a,y,z+d);if(vox[j]!==c||used[j]){ok=false;break}}if(!ok)break;d++}
+  var h=1;while(y+h<16){ok=true;for(var b=0;b<d&&ok;b++)for(a=0;a<w;a++){j=vi(x+a,y+h,z+b);if(vox[j]!==c||used[j]){ok=false;break}}if(!ok)break;h++}
+  for(var hh=0;hh<h;hh++)for(var dd=0;dd<d;dd++)for(var ww=0;ww<w;ww++)used[vi(x+ww,y+hh,z+dd)]=true;
+  boxes.push({x:x,y:y,z:z,w:w,h:h,d:d,c:c})}return boxes}
+function shapeGeometry(sh){var vox=shapeDecode(sh),boxes=shapeBoxes(vox),pal=sh.pal,cv=document.createElement('canvas');cv.width=cv.height=64;var x=cv.getContext('2d');
+ pal.forEach(function(c,k){x.fillStyle=c;x.fillRect((k%8)*8,(k/8|0)*8,8,8)});
+ var cubes=boxes.map(function(b){var k=Math.max(0,pal.indexOf(b.c)),u=[(k%8)*8+2,(k/8|0)*8+2],f={uv:u,uv_size:[4,4]};
+  return{origin:[8-b.x-b.w,b.y,8-b.z-b.d],size:[b.w,b.h,b.d],uv:{north:f,south:f,east:f,west:f,up:f,down:f}}});
+ return{png:cv.toDataURL('image/png').split(',')[1],geo:{format_version:'1.12.0','minecraft:geometry':[{description:{identifier:'geometry.'+NS+'_shape_'+sh.id,texture_width:64,texture_height:64,visible_bounds_width:3,visible_bounds_height:3,visible_bounds_offset:[0,1,0]},bones:[{name:'root',pivot:[0,0,0],cubes:cubes}]}]}}}
+document.addEventListener('click',function(e){var t=e.target.closest('button');if(!t)return;var d=t.dataset;
+ if(d.xnew)return openShape(-1);
+ if(d.xedit)return openShape(+d.xedit);
+ if(d.xdel){var sh=P.shapes[+d.xdel];P.shapes.splice(+d.xdel,1);['mobs','blocks'].forEach(function(k){P[k].forEach(function(o){if(o.shape===sh.id)o.shape=''})});saveP();return render()}
+ if(d.xback)return go(SH.from==='mob'||SH.from==='block'?SH.from:'shapes');
+ if(d.xtpl){SH.vox=tplVox(d.xtpl);return render()}
+ if(d.xup){SH.layer=Math.min(15,SH.layer+1);return render()}
+ if(d.xdown){SH.layer=Math.max(0,SH.layer-1);return render()}
+ if(d.xt){SH.tool=d.xt;return render()}
+ if(d.xc){SH.col=d.xc;if(SH.tool==='goma'||SH.tool==='gotero')SH.tool='lapiz';return render()}
+ if(d.xmir){SH.mir=!SH.mir;return render()}
+ if(d.xundo){if(SH.hist.length)SH.vox=SH.hist.pop();return drawLayer()}
+ if(d.xcopy){if(!SH.layer)return toast('El piso no tiene capa abajo 🙂');SH.hist.push(SH.vox.slice());for(var z=0;z<16;z++)for(var x=0;x<16;x++)SH.vox[vi(x,SH.layer,z)]=SH.vox[vi(x,SH.layer-1,z)];return drawLayer()}
+ if(d.xclear){SH.hist.push(SH.vox.slice());for(z=0;z<16;z++)for(x=0;x<16;x++)SH.vox[vi(x,SH.layer,z)]='';return drawLayer()}
+ if(d.xsave)return saveShape()});
+document.addEventListener('input',function(e){if(e.target.dataset.xname)SH.name=e.target.value});
+document.addEventListener('change',function(e){if(e.target.dataset.xcol){SH.col=e.target.value;if(SH.tool!=='balde')SH.tool='lapiz';render()}});
 
 var UPD={};
 function updBox(){if(!window.Android||!Android.version)return'';var v='<p style="text-align:center"><small>Versión '+esc(Android.version())+'</small></p>'

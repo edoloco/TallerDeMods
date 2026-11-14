@@ -53,6 +53,16 @@ Al crear un **bloque** u **objeto** aparece "🎨 Dibújalo tú": un lienzo de 1
 
 En la criatura, "🎨 Píntala tú": se elige parte (cabeza, cuerpo, brazos, piernas) y cara (frente, espalda, lados, arriba) y se pinta pixel por pixel, con vista previa de frente y espalda. Al pintarla, la criatura usa forma de persona (modelo de zombi), con el tamaño, fuerza y poderes elegidos.
 
+## Formas 3D
+
+En la portada, "🧊 Formas 3D": se construye una figura con cubitos en una cuadrícula de 16×16×16, capa por capa (como construir en Minecraft). Se ve la capa de abajo en transparente y una vista 3D que se gira con el dedo. Herramientas: poner, quitar, rellenar, copiar color, espejo, deshacer, copiar capa de abajo y vaciar capa. Hay plantillas para empezar (esfera, pirámide, hongo, mesa).
+
+Las formas se usan en:
+- **Bloques**: el bloque toma esa figura (cabe exactamente en un bloque).
+- **Criaturas**: la criatura tiene esa figura; el tamaño se ajusta con la opción de tamaño.
+
+La app convierte los cubitos en un modelo 3D de Minecraft (geometría con cajas unidas) y una textura con los colores.
+
 ## Poderes de los objetos
 
 - Espadas y objetos: **al usarlo** (bola de fuego, bola de nieve, flecha, rayo, explosión, teletransporte, supersalto, correr rápido, curarse, llamar un gólem) y **al golpear** (quemar, envenenar, congelar, marchitar, rayo, mandar al aire, curarse).

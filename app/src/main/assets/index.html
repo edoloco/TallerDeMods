@@ -501,13 +501,14 @@ function tpl16(t){var v=emptyVox(16,16),x,y,z;
   [[2,2],[2,12],[12,2],[12,12]].forEach(function(p){for(y=0;y<8;y++)for(z=p[1];z<p[1]+2;z++)for(x=p[0];x<p[0]+2;x++)v[vi(x,y,z)]='#5b3a1e'})}
  return v}
 function shapeChoice(kind){var e=kind==='mob'?'🐲':'🧱';
- if(!P.shapes.length)return step('🧊 Forma 3D (opcional)','<p><small>Con una forma 3D tu '+(kind==='mob'?'criatura':'bloque')+' puede tener la figura que tú construyas.</small></p>'+btn('blue','🧊 Crear una forma 3D','data-xnew="1"'));
+ if(!P.shapes.length)return step('🧊 Forma 3D (opcional)','<p><small>Con una forma 3D tu '+(kind==='mob'?'criatura':'bloque')+' puede tener la figura que tú construyas.</small></p>'+btn('blue','🧊 Crear una forma 3D','data-xnew="1"')+(kind==='mob'?btn('alt','🐾 Usar un mob de Minecraft como forma','data-xmcgo="1"'):''));
  return step('🧊 Forma 3D (opcional)',opts(kind+'.shape',[['',e,kind==='mob'?'Modelo de Minecraft':'Cubo normal']].concat(P.shapes.filter(function(sh){return kind==='mob'||fitsBlock(sh)}).map(function(sh){return[sh.id,'<canvas class="xth" data-sh="'+sh.id+'" width="56" height="56" style="width:40px;height:40px"></canvas>',esc(sh.name)]})))
   +(kind==='block'&&P.shapes.some(function(sh){return!fitsBlock(sh)})?'<p><small>Las formas de más de '+BLOCK_MAX+' de ancho o alto son solo para criaturas (Minecraft no deja bloques más grandes).</small></p>':'')
+  +(kind==='mob'?btn('alt','🐾 Usar un mob de Minecraft como forma','data-xmcgo="1"'):'')
   +(kind==='mob'&&S.mob.shape?'<p><small>Con una forma 3D la criatura no se pinta: los colores vienen de la forma.</small></p>':''))}
 VIEW.shapes=function(){var L=P.shapes.map(function(sh,i){return'<div class="row"><span style="display:flex;align-items:center;gap:10px"><canvas class="xth" data-sh="'+sh.id+'" width="72" height="72" style="width:54px;height:54px"></canvas><span><b>'+esc(sh.name)+'</b><br><small>'+shDims(sh).W+'×'+shDims(sh).W+' · '+shDims(sh).H+' de alto'+(fitsBlock(sh)?'':' · solo criaturas')+'</small></span></span><span style="display:flex;gap:6px;flex:none"><button class="del" data-xedit="'+i+'" aria-label="Cambiar">✏️</button><button class="del" data-xdel="'+i+'" aria-label="Borrar">🗑️</button></span></div>'}).join('');
  return head('🧊 Formas 3D')+'<div class="card"><p>Construye figuras con cubitos, capa por capa, como en Minecraft. Después úsalas en tus <b>bloques</b> y <b>criaturas</b>.</p></div>'
-  +btn('','➕ Nueva forma','data-xnew="1"')+'<div class="card">'+(L||'<p>Todavía no tienes formas.</p>')+'</div>'};
+  +btn('','➕ Nueva forma','data-xnew="1"')+btn('alt','🐾 Traer un mob de Minecraft','data-xmcgo="1"')+'<div class="card">'+(L||'<p>Todavía no tienes formas.</p>')+'</div>'};
 VIEW.shape=function(){var b=function(a,e,t,on){return'<button type="button" class="opt'+(on?' on':'')+'" '+a+'><span class="e">'+e+'</span>'+t+'</button>'},L=SH.layer;
  return'<div class="top"><button class="back" data-xback="1">⬅️</button><h1>🧊 '+(SH.i<0?'Nueva forma':'Cambiar forma')+'</h1></div>'
  +step('1. ¿Cómo se llama?','<input type="text" maxlength="30" data-xname="1" placeholder="Ej: Silla, Cohete, Árbol" value="'+esc(SH.name)+'">')
@@ -598,6 +599,8 @@ document.addEventListener('click',function(e){var t=e.target.closest('button');i
  if(d.xback)return go(SH.from==='mob'||SH.from==='block'?SH.from:'shapes');
  if(d.xtpl){SH.vox=tplVox(d.xtpl);return render()}
  if(d.xmc)return mcImport(+d.xmc);
+ if(d.xmcgo){S.mcFrom=scr;return go('mcpick')}
+ if(d.xmcp){var fr=S.mcFrom||'shapes';openShape(-1);SH.from=fr;return mcImport(+d.xmcp)}
  if(d.xallmc){SH.allmc=!SH.allmc;return render()}
  if(d.xup){SH.layer=Math.min(SH.H-1,SH.layer+1);return render()}
  if(d.xw||d.xh){var W1=d.xw?+d.xw:SH.W,H1=d.xh?+d.xh:SH.H;if(W1===SH.W&&H1===SH.H)return;
@@ -704,6 +707,13 @@ function mcImport(k){var m=MC.mobs[k];if(!m||MC.busy)return;MC.busy=true;toast('
   mcTexture(tp,function(tex){var r=null,pose={};try{r=mcVoxelize(geo,tex,pose)}catch(e){}MC.busy=false;if(!r||!r.vox.some(function(c){return c}))return toast('😕 No pude convertir '+m.n);
    SH.W=r.W;SH.H=r.H;SH.vox=r.vox;SH.hist=[];SH.layer=0;SH.ox=SH.oz=r.W>16?Math.floor((r.W-16)/2):0;if(!SH.name)SH.name=m.n;
    toast('✅ '+m.n+' listo. ¡Cámbialo como quieras!')})}catch(e){MC.busy=false;toast('😕 No pude convertir '+m.n)}},30)}
+VIEW.mcpick=function(){var st=mcStatus(),L=st==='ok'?(mcMobs()||[]):[],b=function(a,e,t){return'<button type="button" class="opt" '+a+'><span class="e">'+e+'</span>'+t+'</button>'};
+ var msg=st==='ok'?(L.length?'<p style="margin:0">Toca un mob: la app lo lee de tu Minecraft y lo convierte a cubitos para que lo cambies como quieras.</p>':'<p>😕 Encontré Minecraft, pero no encontré mobs dentro.</p>')
+  :st==='no_mc'?'<p>😕 No encontré Minecraft instalado en este teléfono. Los mobs se leen desde el juego, así que primero hay que instalarlo.</p>'
+  :st==='no_app'?'<p>😕 Esta parte solo funciona dentro de la app del teléfono.</p>'
+  :'<p>😕 Encontré Minecraft, pero no pude leer sus modelos.</p><p><small>Detalle para el papá: '+esc(st)+'</small></p>';
+ return'<div class="top"><button class="back" data-go="'+(S.mcFrom||'shapes')+'">⬅️</button><h1>🐾 Mobs de Minecraft</h1></div><div class="card">'+msg+'</div>'
+  +(L.length?'<div class="card"><div class="grid">'+L.map(function(m,i){return b('data-xmcp="'+i+'"','🐾',esc(m.n))}).join('')+'</div></div>':'')};
 function mcStep(b){var st=mcStatus();
  if(st==='no_app')return'';
  if(st==='no_mc')return'<p style="margin:10px 0 6px"><small>Mobs de Minecraft: instala Minecraft en este teléfono para verlos aquí.</small></p>';

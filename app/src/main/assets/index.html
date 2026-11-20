@@ -512,7 +512,7 @@ VIEW.shape=function(){var b=function(a,e,t,on){return'<button type="button" clas
   +'<p style="margin:8px 0 0"><small>16 = un bloque. '+(SH.W<=BLOCK_MAX&&SH.H<=BLOCK_MAX?'✅ Sirve para bloques y criaturas.':'🐲 De este tamaño sirve solo para criaturas.')+'</small></p>')
  +(SH.i<0&&!SH.vox.some(function(c){return c})?step('¿Empezar con algo?','<p style="margin:0 0 6px"><small>Cuerpos para criaturas (después píntalos a tu manera):</small></p><div class="grid">'
   +b('data-xtpl="persona"','🧍','Persona',0)+b('data-xtpl="cuatro"','🐕','Cuatro patas',0)+b('data-xtpl="ocho"','🕷️','Ocho patas',0)+b('data-xtpl="pajaro"','🐦','Pájaro',0)+b('data-xtpl="fantasmita"','👻','Fantasmita',0)+b('data-xtpl="pez"','🐟','Pez',0)+'</div>'
-  +'<p style="margin:10px 0 6px"><small>Figuras:</small></p><div class="grid">'+b('data-xtpl="esfera"','🟢','Esfera',0)+b('data-xtpl="piramide"','🔺','Pirámide',0)+b('data-xtpl="hongo"','🍄','Hongo',0)+b('data-xtpl="mesa"','🪑','Mesa',0)+'</div>'):'')
+  +mcStep(b)+'<p style="margin:10px 0 6px"><small>Figuras:</small></p><div class="grid">'+b('data-xtpl="esfera"','🟢','Esfera',0)+b('data-xtpl="piramide"','🔺','Pirámide',0)+b('data-xtpl="hongo"','🍄','Hongo',0)+b('data-xtpl="mesa"','🪑','Mesa',0)+'</div>'):'')
  +'<div class="card" style="text-align:center"><canvas id="x3d" width="640" height="560" style="width:100%;max-width:360px;touch-action:none;background:#dfeefa;border:3px solid #2b2118;border-radius:6px"></canvas><p style="margin:4px 0 0"><small>👆 Arrastra para girar</small></p></div>'
  +'<div class="card"><div style="display:flex;align-items:center;justify-content:space-between;gap:8px"><button class="btn alt" style="flex:1;margin:0" data-xdown="1">⬇️ Bajar</button><b style="text-align:center;min-width:90px">Capa '+(L+1)+' de '+SH.H+'<br><small>'+(L===0?'(el piso)':L===SH.H-1?'(lo más alto)':'')+'</small></b><button class="btn alt" style="flex:1;margin:0" data-xup="1">⬆️ Subir</button></div>'
  +'<p style="text-align:center;margin:8px 0 4px"><small>⬆️ atrás · ⬇️ frente · transparente = capa de abajo</small></p>'
@@ -585,7 +585,7 @@ function shapeBoxes(vox,W,H){var used=[],boxes=[],x,y,z,vi=function(a,b,c){retur
 function shapeGeometry(sh){var dm=shDims(sh),vox=shapeDecode(sh),boxes=shapeBoxes(vox,dm.W,dm.H),pal=sh.pal,cv=document.createElement('canvas');cv.width=cv.height=64;var x=cv.getContext('2d');
  pal.forEach(function(c,k){x.fillStyle=c;x.fillRect((k%8)*8,(k/8|0)*8,8,8)});
  var cubes=boxes.map(function(b){var k=Math.max(0,pal.indexOf(b.c)),u=[(k%8)*8+2,(k/8|0)*8+2],f={uv:u,uv_size:[4,4]};
-  return{origin:[dm.W/2-b.x-b.w,b.y,dm.W/2-b.z-b.d],size:[b.w,b.h,b.d],uv:{north:f,south:f,east:f,west:f,up:f,down:f}}});
+  return{origin:[b.x-dm.W/2,b.y,dm.W/2-b.z-b.d],size:[b.w,b.h,b.d],uv:{north:f,south:f,east:f,west:f,up:f,down:f}}});
  return{png:cv.toDataURL('image/png').split(',')[1],geo:{format_version:'1.12.0','minecraft:geometry':[{description:{identifier:'geometry.'+NS+'_shape_'+sh.id,texture_width:64,texture_height:64,visible_bounds_width:Math.ceil(dm.W/16)+2,visible_bounds_height:Math.ceil(dm.H/16)+2,visible_bounds_offset:[0,dm.H/32,0]},bones:[{name:'root',pivot:[0,0,0],cubes:cubes}]}]}}}
 document.addEventListener('click',function(e){var t=e.target.closest('button');if(!t)return;var d=t.dataset;
  if(d.xnew)return openShape(-1);
@@ -593,6 +593,8 @@ document.addEventListener('click',function(e){var t=e.target.closest('button');i
  if(d.xdel){var sh=P.shapes[+d.xdel];P.shapes.splice(+d.xdel,1);['mobs','blocks'].forEach(function(k){P[k].forEach(function(o){if(o.shape===sh.id)o.shape=''})});saveP();return render()}
  if(d.xback)return go(SH.from==='mob'||SH.from==='block'?SH.from:'shapes');
  if(d.xtpl){SH.vox=tplVox(d.xtpl);return render()}
+ if(d.xmc)return mcImport(+d.xmc);
+ if(d.xallmc){SH.allmc=!SH.allmc;return render()}
  if(d.xup){SH.layer=Math.min(SH.H-1,SH.layer+1);return render()}
  if(d.xw||d.xh){var W1=d.xw?+d.xw:SH.W,H1=d.xh?+d.xh:SH.H;if(W1===SH.W&&H1===SH.H)return;
   var lost=false;if(H1<SH.H)for(var q=SH.W*SH.W*H1;q<SH.vox.length;q++)if(SH.vox[q]){lost=true;break}
@@ -610,6 +612,102 @@ document.addEventListener('click',function(e){var t=e.target.closest('button');i
 document.addEventListener('input',function(e){if(e.target.dataset.xname)SH.name=e.target.value});
 document.addEventListener('change',function(e){if(e.target.dataset.xcol){SH.col=e.target.value;if(SH.tool!=='balde')SH.tool='lapiz';render()}});
 
+// ---------- Mobs de Minecraft: se leen del juego instalado y se convierten a cubitos ----------
+var MCN={chicken:'Gallina',cow:'Vaca',pig:'Cerdo',wolf:'Lobo',sheep:'Oveja',rabbit:'Conejo',horse:'Caballo',donkey:'Burro',mule:'Mula',cat:'Gato',ocelot:'Ocelote',fox:'Zorro',parrot:'Loro',llama:'Llama',goat:'Cabra',camel:'Camello',
+ mooshroom:'Champiñaca',bee:'Abeja',axolotl:'Ajolote',frog:'Rana',tadpole:'Renacuajo',turtle:'Tortuga',panda:'Panda',polar_bear:'Oso polar',dolphin:'Delfín',squid:'Calamar',glow_squid:'Calamar brillante',cod:'Bacalao',salmon:'Salmón',
+ pufferfish:'Pez globo',tropicalfish:'Pez tropical',bat:'Murciélago',allay:'Allay',sniffer:'Sniffer',armadillo:'Armadillo',villager_v2:'Aldeano',villager:'Aldeano',wandering_trader:'Vendedor ambulante',iron_golem:'Gólem de hierro',
+ snow_golem:'Gólem de nieve',copper_golem:'Gólem de cobre',zombie:'Zombi',husk:'Momia',drowned:'Ahogado',zombie_villager_v2:'Aldeano zombi',zombie_villager:'Aldeano zombi',skeleton:'Esqueleto',stray:'Esqueleto glacial',bogged:'Bogged',
+ wither_skeleton:'Esqueleto wither',creeper:'Creeper',spider:'Araña',cave_spider:'Araña de cueva',enderman:'Enderman',endermite:'Endermite',silverfish:'Lepisma',witch:'Bruja',slime:'Slime',magma_cube:'Cubo de magma',blaze:'Blaze',
+ ghast:'Ghast',happy_ghast:'Ghast feliz',phantom:'Phantom',guardian:'Guardián',elder_guardian:'Guardián anciano',shulker:'Shulker',vex:'Vex',evocation_illager:'Evocador',vindicator:'Vindicador',pillager:'Saqueador',ravager:'Devastador',
+ piglin:'Piglin',piglin_brute:'Piglin bruto',zombie_pigman:'Piglin zombi',hoglin:'Hoglin',zoglin:'Zoglin',strider:'Strider',warden:'Warden',breeze:'Breeze',creaking:'Creaking',wither:'Wither',ender_dragon:'Dragón del End',skeleton_horse:'Caballo esqueleto',zombie_horse:'Caballo zombi',trader_llama:'Llama de comerciante',nautilus:'Nautilus'};
+var MCORDER=['chicken','cow','pig','wolf','sheep','rabbit','horse','cat','fox','parrot','llama','goat','bee','axolotl','frog','turtle','panda','polar_bear','villager_v2','iron_golem','snow_golem','zombie','skeleton','creeper','spider','enderman','witch','slime','blaze','ghast','warden','wither','ender_dragon'];
+var MCEXTRA={wither:1,ender_dragon:1,iron_golem:1,snow_golem:1},MCSKIP={agent:1,npc:1,tripod_camera:1,armor_stand:1};
+var MC={st:null,mobs:null,geo:null,busy:false};
+function mcJson(rel){var t=Android.mcText(rel);if(!t)return null;t=t.replace(/\/\*[\s\S]*?\*\//g,'').replace(/^\s*\/\/.*$/gm,'');try{return JSON.parse(t)}catch(e){}try{return JSON.parse(t.replace(/,\s*([}\]])/g,'$1'))}catch(e){return null}}
+function mcStatus(){if(MC.st)return MC.st;if(!window.Android||!Android.mcStatus)return MC.st='no_app';try{MC.st=Android.mcStatus()}catch(e){MC.st='no_app'}return MC.st}
+function mcMobs(){if(MC.mobs)return MC.mobs;if(mcStatus()!=='ok')return null;var by={};
+ JSON.parse(Android.mcFiles('entity/')).forEach(function(f){if(!/\.json$/.test(f))return;var j=mcJson(f),ce=j&&j['minecraft:client_entity'],d=ce&&ce.description;if(!d||!d.geometry||!d.textures)return;
+  var id=(d.identifier||'').replace('minecraft:','');if(!id||(!d.spawn_egg&&!MCEXTRA[id]))return;var sc=/v1\.0|\.v1\.|_v1\b/.test(f)?0:1,o=by[id];if(!o||sc>o.s)by[id]={id:id,f:f,s:sc,n:MCN[id]||id.replace(/_/g,' ').replace(/^./,function(c){return c.toUpperCase()})}});
+ var L=Object.keys(by).map(function(k){return by[k]});
+ L.sort(function(a,b){var ia=MCORDER.indexOf(a.id),ib=MCORDER.indexOf(b.id);ia=ia<0?999:ia;ib=ib<0?999:ib;return ia-ib||a.n.localeCompare(b.n)});
+ var seen={};L=L.filter(function(m){if(MCSKIP[m.id]||seen[m.n])return false;seen[m.n]=1;return true});return MC.mobs=L}
+function mcGeoIndex(){if(MC.geo)return MC.geo;var G={};
+ JSON.parse(Android.mcFiles('models/')).forEach(function(f){if(!/\.json$/.test(f))return;var j=mcJson(f);if(!j)return;
+  (j['minecraft:geometry']||[]).forEach(function(g){var d=g.description||{};if(d.identifier)G[d.identifier]={tw:d.texture_width||64,th:d.texture_height||64,bones:g.bones||[]}});
+  Object.keys(j).forEach(function(k){if(k.indexOf('geometry.')!==0)return;var p=k.split(':'),g=j[k]||{};G[p[0]]={tw:g.texturewidth,th:g.textureheight,bones:g.bones||[],parent:p[1]}})});
+ return MC.geo=G}
+function mcGeo(id,depth){var G=mcGeoIndex(),g=G[id];if(!g)return null;if(!g.parent||depth>8)return{tw:g.tw||64,th:g.th||32,bones:g.bones};
+ var p=mcGeo(g.parent,(depth||0)+1);if(!p)return{tw:g.tw||64,th:g.th||32,bones:g.bones};var bones=p.bones.slice();
+ g.bones.forEach(function(b){var i=-1;bones.forEach(function(x,k){if(x.name===b.name)i=k});if(i>=0)bones[i]=b;else bones.push(b)});return{tw:g.tw||p.tw,th:g.th||p.th,bones:bones}}
+function tgaDecode(b64){var bin=atob(b64),u=new Uint8Array(bin.length),i;for(i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i);
+ var type=u[2],w=u[12]|u[13]<<8,h=u[14]|u[15]<<8,px=u[16]/8,desc=u[17],p=18+u[0]+(u[1]?(u[5]|u[6]<<8)*Math.ceil(u[7]/8):0);
+ if(!(type===2||type===10)||(px!==3&&px!==4))return null;var n=w*h,out=new Uint8ClampedArray(n*4);i=0;
+ function put(k,o){out[k*4]=u[o+2];out[k*4+1]=u[o+1];out[k*4+2]=u[o];out[k*4+3]=px===4?u[o+3]:255}
+ if(type===2)for(;i<n;i++){put(i,p);p+=px}else while(i<n){var c=u[p++],cnt=(c&127)+1,j;if(c&128){for(j=0;j<cnt&&i<n;j++)put(i++,p);p+=px}else for(j=0;j<cnt&&i<n;j++){put(i++,p);p+=px}}
+ if(!(desc&32)){var f=new Uint8ClampedArray(n*4);for(var y=0;y<h;y++)f.set(out.subarray((h-1-y)*w*4,(h-y)*w*4),y*w*4);out=f}
+ var anyA=false;for(i=3;i<out.length;i+=4)if(out[i]){anyA=true;break}if(!anyA)for(i=3;i<out.length;i+=4)out[i]=255;return{w:w,h:h,d:out}}
+function mcTexture(path,cb){var b=Android.mcB64(path+'.png');
+ if(b){var im=new Image();im.onload=function(){var c=document.createElement('canvas');c.width=im.width;c.height=im.height;var x=c.getContext('2d');x.drawImage(im,0,0);cb({w:im.width,h:im.height,d:x.getImageData(0,0,im.width,im.height).data})};im.onerror=function(){cb(null)};im.src='data:image/png;base64,'+b;return}
+ b=Android.mcB64(path+'.tga');cb(b?tgaDecode(b):null)}
+function rmat(r){if(!r)return null;var a=r[0]*Math.PI/180,b=r[1]*Math.PI/180,c=r[2]*Math.PI/180;if(!a&&!b&&!c)return null;
+ var ca=Math.cos(a),sa=Math.sin(a),cb=Math.cos(b),sb=Math.sin(b),cc=Math.cos(c),sc=Math.sin(c);
+ // M = Rz * Ry * Rx (orden ZYX, como Blockbench)
+ return[[cc*cb,cc*sb*sa-sc*ca,cc*sb*ca+sc*sa],[sc*cb,sc*sb*sa+cc*ca,sc*sb*ca-cc*sa],[-sb,cb*sa,cb*ca]]}
+function mvec(M,v,t){if(t)return[M[0][0]*v[0]+M[1][0]*v[1]+M[2][0]*v[2],M[0][1]*v[0]+M[1][1]*v[1]+M[2][1]*v[2],M[0][2]*v[0]+M[1][2]*v[1]+M[2][2]*v[2]];return[M[0][0]*v[0]+M[0][1]*v[1]+M[0][2]*v[2],M[1][0]*v[0]+M[1][1]*v[1]+M[1][2]*v[2],M[2][0]*v[0]+M[2][1]*v[1]+M[2][2]*v[2]]}
+var SKIPBONE=/armou?r|helmet|^(left|right)?_?item|saddle|^chest\d|^bag|leash|^bow$|halo|^cape|elytra|^hat$|^jacket$|sleeve|pants|^tools?$/i;
+function mcVoxelize(geo,tex,pose){var bones={},cubes=[];pose=pose||{};
+geo.bones.forEach(function(b){bones[(b.name||'').toLowerCase()]=b});
+ function chain(b){var L=[],seen={};while(b&&!seen[b.name]){seen[b.name]=1;L.unshift(b);b=b.parent?bones[b.parent.toLowerCase()]:null}return L}
+ function hidden(b){if(b.neverRender)return true;var seen={};while(b&&!seen[b.name]){seen[b.name]=1;if(SKIPBONE.test(b.name||''))return true;b=b.parent?bones[b.parent.toLowerCase()]:null}return false}
+ // todo se pasa a espacio "Blockbench" (x espejado): from=[-(ox+sx),oy,oz], pivote [-px,py,pz], rotación [-rx,-ry,rz]
+ function T(piv,rot,off){var M=rmat(rot?[-rot[0],-rot[1],rot[2]]:null),o=off&&(off[0]||off[1]||off[2])?[-off[0],off[1],off[2]]:null;if(!M&&!o)return null;return{M:M||[[1,0,0],[0,1,0],[0,0,1]],p:[-(piv||[0,0,0])[0],(piv||[0,0,0])[1],(piv||[0,0,0])[2]],o:o||[0,0,0]}}
+ function boneT(x){var ps=pose[(x.name||'').toLowerCase()],r=x.rotation||null;if(ps&&(ps.r[0]||ps.r[1]||ps.r[2]))r=[(r?r[0]:0)+ps.r[0],(r?r[1]:0)+ps.r[1],(r?r[2]:0)+ps.r[2]];return T(x.pivot,r,ps&&ps.p)}
+ geo.bones.forEach(function(b){if(hidden(b))return;var ch=chain(b).map(boneT).filter(Boolean),bpt=b.bind_pose_rotation?T(b.pivot,b.bind_pose_rotation):null;if(bpt)ch.push(bpt);
+  (b.cubes||[]).forEach(function(c){if(!c.origin||!c.size)return;var s=c.size,o=c.origin,f=[-(o[0]+s[0]),o[1],o[2]],t=[f[0]+s[0],f[1]+s[1],f[2]+s[2]],lo=f.slice(),hi=t.slice(),inf=c.inflate||0;
+   for(var k=0;k<3;k++){lo[k]-=inf;hi[k]+=inf;if(hi[k]-lo[k]<1){var m=(lo[k]+hi[k])/2;lo[k]=m-0.5;hi[k]=m+0.5}}
+   var tr=ch.slice(),ct=T(c.pivot||[o[0]+s[0]/2,o[1]+s[1]/2,o[2]+s[2]/2],c.rotation);if(ct)tr.push(ct);
+   cubes.push({f:f,t:t,lo:lo,hi:hi,s:s,uv:c.uv||[0,0],mir:c.mirror!=null?c.mirror:!!b.mirror,tr:tr,inf:inf})})});
+ cubes.sort(function(a,b){return b.inf-a.inf});
+ function fwd(c,p){for(var i=c.tr.length-1;i>=0;i--){var q=c.tr[i];p=mvec(q.M,[p[0]-q.p[0],p[1]-q.p[1],p[2]-q.p[2]]);p=[p[0]+q.p[0]+q.o[0],p[1]+q.p[1]+q.o[1],p[2]+q.p[2]+q.o[2]]}return p}
+ function inv(c,p){for(var i=0;i<c.tr.length;i++){var q=c.tr[i];p=mvec(q.M,[p[0]-q.p[0]-q.o[0],p[1]-q.p[1]-q.o[1],p[2]-q.p[2]-q.o[2]],1);p=[p[0]+q.p[0],p[1]+q.p[1],p[2]+q.p[2]]}return p}
+ var mn=[1e9,1e9,1e9],mx=[-1e9,-1e9,-1e9];
+ cubes.forEach(function(c){for(var k=0;k<8;k++){var p=fwd(c,[k&1?c.hi[0]:c.lo[0],k&2?c.hi[1]:c.lo[1],k&4?c.hi[2]:c.lo[2]]);for(var a=0;a<3;a++){mn[a]=Math.min(mn[a],p[a]);mx[a]=Math.max(mx[a],p[a])}}});
+ if(!cubes.length)return null;
+ var sx=mx[0]-mn[0],sy=mx[1]-mn[1],sz=mx[2]-mn[2],sc=Math.min(1,32/Math.max(sx,sz,1),64/Math.max(sy,1)),need=Math.ceil(Math.max(sx,sz)*sc-0.01),needH=Math.ceil(sy*sc-0.01);
+ var W=SIZES_W.filter(function(n){return n>=need})[0]||32,H=SIZES_H.filter(function(n){return n>=needH})[0]||64,cx=(mn[0]+mx[0])/2,cz=(mn[2]+mx[2])/2,vox=[];
+ var kx=tex?tex.w/(geo.tw||64):1,ky=tex?tex.h/(geo.th||64):1;
+ function texel(u,v){if(!tex)return'#9e9e9e';var X=Math.max(0,Math.min(tex.w-1,Math.floor(u*kx))),Y=Math.max(0,Math.min(tex.h-1,Math.floor(v*ky))),i=(Y*tex.w+X)*4;
+  if(tex.d[i+3]<16)return'';return'#'+((1<<24)+(tex.d[i]<<16)+(tex.d[i+1]<<8)+tex.d[i+2]).toString(16).slice(1)}
+ function colorOf(c,p){var f=c.f,t=c.t,s=c.s,w=s[0],h=s[1],d=s[2],cl=function(v,m){return Math.max(0,Math.min(m-0.001,v))};
+  var D=[['west',p[0]-f[0]],['east',t[0]-p[0]],['down',p[1]-f[1]],['up',t[1]-p[1]],['north',p[2]-f[2]],['south',t[2]-p[2]]];D.sort(function(a,b){return a[1]-b[1]});
+  for(var q=0;q<2;q++){var face=D[q][0],S,Tt,fw,fh;
+   if(face==='north'){S=t[0]-p[0];Tt=t[1]-p[1];fw=w;fh=h}else if(face==='south'){S=p[0]-f[0];Tt=t[1]-p[1];fw=w;fh=h}
+   else if(face==='east'){S=t[2]-p[2];Tt=t[1]-p[1];fw=d;fh=h}else if(face==='west'){S=p[2]-f[2];Tt=t[1]-p[1];fw=d;fh=h}
+   else if(face==='up'){S=p[0]-f[0];Tt=p[2]-f[2];fw=w;fh=d}else{S=p[0]-f[0];Tt=t[2]-p[2];fw=w;fh=d}
+   S=cl(S,Math.max(fw,1));Tt=cl(Tt,Math.max(fh,1));var col;
+   if(Array.isArray(c.uv)){var u=c.uv[0],v=c.uv[1],fl=Math.floor,W2=fl(w),H2=fl(h),D2=fl(d),R={east:[u,v+D2],north:[u+D2,v+D2],west:[u+D2+W2,v+D2],south:[u+2*D2+W2,v+D2],up:[u+D2,v],down:[u+D2+W2,v]};
+    var fc=face;if(c.mir){if(face==='east')fc='west';else if(face==='west')fc='east';S=Math.max(fw,1)-0.001-S}col=texel(R[fc][0]+S,R[fc][1]+Tt)}
+   else{var F=c.uv[face];if(!F||!F.uv)continue;var us=F.uv_size||[fw,fh];col=texel(F.uv[0]+S/Math.max(fw,1)*us[0],F.uv[1]+Tt/Math.max(fh,1)*us[1])}
+   if(col)return col}return''}
+ for(var y=0;y<H;y++)for(var z=0;z<W;z++)for(var x=0;x<W;x++){
+  var P=[(W/2-(x+0.5))/sc+cx,(y+0.5)/sc+mn[1],(W/2-(z+0.5))/sc+cz],col='';
+  for(var i=0;i<cubes.length&&!col;i++){var c=cubes[i],l=inv(c,P);if(l[0]<c.lo[0]||l[0]>c.hi[0]||l[1]<c.lo[1]||l[1]>c.hi[1]||l[2]<c.lo[2]||l[2]>c.hi[2])continue;col=colorOf(c,l)}
+  vox.push(col)}
+ return{W:W,H:H,vox:vox}}
+function mcImport(k){var m=MC.mobs[k];if(!m||MC.busy)return;MC.busy=true;toast('⏳ Convirtiendo '+m.n+' a cubitos…');
+ setTimeout(function(){try{var j=mcJson(m.f),d=j['minecraft:client_entity'].description,gid=d.geometry.default||d.geometry[Object.keys(d.geometry)[0]],tp=d.textures.default||d.textures[Object.keys(d.textures)[0]],geo=mcGeo(gid);
+  if(!geo){MC.busy=false;return toast('😕 No encontré el modelo de '+m.n)}
+  mcTexture(tp,function(tex){var r=null,pose={};try{r=mcVoxelize(geo,tex,pose)}catch(e){}MC.busy=false;if(!r||!r.vox.some(function(c){return c}))return toast('😕 No pude convertir '+m.n);
+   SH.W=r.W;SH.H=r.H;SH.vox=r.vox;SH.hist=[];SH.layer=0;SH.ox=SH.oz=r.W>16?Math.floor((r.W-16)/2):0;if(!SH.name)SH.name=m.n;
+   toast('✅ '+m.n+' listo. ¡Cámbialo como quieras!')})}catch(e){MC.busy=false;toast('😕 No pude convertir '+m.n)}},30)}
+function mcStep(b){var st=mcStatus();
+ if(st==='no_app')return'';
+ if(st==='no_mc')return'<p style="margin:10px 0 6px"><small>Mobs de Minecraft: instala Minecraft en este teléfono para verlos aquí.</small></p>';
+ if(st!=='ok')return'<p style="margin:10px 0 6px"><small>Mobs de Minecraft: no encontré los modelos dentro del juego ('+esc(st)+').</small></p>';
+ var L=mcMobs()||[];if(!L.length)return'';
+ var V=SH.allmc?L:L.slice(0,15);
+ return'<p style="margin:10px 0 6px"><small>Mobs de Minecraft (los lee de tu juego):</small></p><div class="grid">'+V.map(function(m){return b('data-xmc="'+L.indexOf(m)+'"','🐾',esc(m.n),0)}).join('')+'</div>'
+  +(L.length>15?'<button class="back" data-xallmc="1">'+(SH.allmc?'Ver menos':'➕ Ver todos los mobs ('+L.length+')')+'</button>':'')}
 var UPD={};
 function updBox(){if(!window.Android||!Android.version)return'';var v='<p style="text-align:center"><small>Versión '+esc(Android.version())+'</small></p>'
  +(UPD.estado==='hay'||UPD.estado==='bajando'?'':btn('alt',UPD.estado==='buscando'?'🔎 Buscando…':'🔄 Buscar actualizaciones','data-check="1"'))

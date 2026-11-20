@@ -129,6 +129,13 @@ public class MainActivity extends Activity {
             return a.toString();
         }
 
+        /** Diagnóstico: paquetes encontrados y cuántos archivos tiene cada uno. */
+        @JavascriptInterface
+        public String mcInfo() {
+            mcIndexar();
+            return mcResumen.toString();
+        }
+
         @JavascriptInterface
         public String mcText(String rel) {
             byte[] b = mcLeer(rel);
@@ -226,6 +233,7 @@ public class MainActivity extends Activity {
     // ---------- Minecraft instalado ----------
 
     private Map<String, String[]> mcIdx = null;
+    private final StringBuilder mcResumen = new StringBuilder();
     private String mcEstado = null;
     private final Map<String, ZipFile> zips = new HashMap<>();
 
@@ -259,6 +267,7 @@ public class MainActivity extends Activity {
         StringBuilder vistos = new StringBuilder();
         StringBuilder empaquetados = new StringBuilder();
         String clave = "resource_packs/";
+        Map<String, Integer> conteo = new HashMap<>();
         for (String apk : apks) {
             try {
                 ZipFile z = new ZipFile(apk);
@@ -287,6 +296,9 @@ public class MainActivity extends Activity {
                     int s = resto.indexOf('/');
                     if (s < 0) continue;
                     String pack = resto.substring(0, s);
+                    String pref = n.substring(0, k);
+                    Integer cnt = conteo.get(pref + "|" + pack);
+                    conteo.put(pref + "|" + pack, cnt == null ? 1 : cnt + 1);
                     if (!pack.startsWith("vanilla") || pack.contains("music")) continue;
                     String rel = resto.substring(s + 1);
                     long r = rangoPaquete(pack);
@@ -298,6 +310,9 @@ public class MainActivity extends Activity {
                 }
             } catch (Exception ignorar) { }
         }
+        List<String> claves = new ArrayList<>(conteo.keySet());
+        Collections.sort(claves);
+        for (String c : claves) if (mcResumen.length() < 600) mcResumen.append(c).append('=').append(conteo.get(c)).append(' ');
         if (idx.isEmpty()) return mcEstado = "no_assets:" + vistos.toString().trim()
                 + (empaquetados.length() > 0 ? " | archivos: " + empaquetados.toString().trim() : "")
                 + " | apks: " + apks.size();

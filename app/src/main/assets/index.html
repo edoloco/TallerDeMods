@@ -708,12 +708,16 @@ function mcImport(k){var m=MC.mobs[k];if(!m||MC.busy)return;MC.busy=true;toast('
    SH.W=r.W;SH.H=r.H;SH.vox=r.vox;SH.hist=[];SH.layer=0;SH.ox=SH.oz=r.W>16?Math.floor((r.W-16)/2):0;if(!SH.name)SH.name=m.n;
    toast('✅ '+m.n+' listo. ¡Cámbialo como quieras!')})}catch(e){MC.busy=false;toast('😕 No pude convertir '+m.n)}},30)}
 VIEW.mcpick=function(){var st=mcStatus(),L=st==='ok'?(mcMobs()||[]):[],b=function(a,e,t){return'<button type="button" class="opt" '+a+'><span class="e">'+e+'</span>'+t+'</button>'};
- var msg=st==='ok'?(L.length?'<p style="margin:0">Toca un mob: la app lo lee de tu Minecraft y lo convierte a cubitos para que lo cambies como quieras.</p>':'<p>😕 Encontré Minecraft, pero no encontré mobs dentro.</p>')
+ var msg=st==='ok'?(L.length?'<p style="margin:0">Toca un mob: la app lo lee de tu Minecraft y lo convierte a cubitos para que lo cambies como quieras.</p>':'<p>😕 Encontré Minecraft, pero no encontré mobs dentro.</p><p style="word-break:break-all"><small>Detalle para el papá: '+esc(mcDiag())+'</small></p>')
   :st==='no_mc'?'<p>😕 No encontré Minecraft instalado en este teléfono. Los mobs se leen desde el juego, así que primero hay que instalarlo.</p>'
   :st==='no_app'?'<p>😕 Esta parte solo funciona dentro de la app del teléfono.</p>'
   :'<p>😕 Encontré Minecraft, pero no pude leer sus modelos.</p><p><small>Detalle para el papá: '+esc(st)+'</small></p>';
  return'<div class="top"><button class="back" data-go="'+(S.mcFrom||'shapes')+'">⬅️</button><h1>🐾 Mobs de Minecraft</h1></div><div class="card">'+msg+'</div>'
   +(L.length?'<div class="card"><div class="grid">'+L.map(function(m,i){return b('data-xmcp="'+i+'"','🐾',esc(m.n))}).join('')+'</div></div>':'')};
+function mcDiag(){try{var all=JSON.parse(Android.mcFiles('')),ent=all.filter(function(f){return f.indexOf('entity/')===0}),ok=0,egg=0,geo=0,first='',head='';
+ ent.slice(0,400).forEach(function(f){var t=Android.mcText(f);if(!first){first=f;head=t.slice(0,60).replace(/\s+/g,' ')}var j=mcJson(f),d=j&&j['minecraft:client_entity']&&j['minecraft:client_entity'].description;if(j)ok++;if(d&&d.spawn_egg)egg++;if(d&&d.geometry)geo++});
+ var carpetas={};all.forEach(function(f){var c=f.split('/')[0];carpetas[c]=(carpetas[c]||0)+1});
+ return'archivos='+all.length+' entity='+ent.length+' leidos='+ok+' huevo='+egg+' geo='+geo+' ej='+first+' inicio=['+head+'] carpetas='+Object.keys(carpetas).slice(0,12).map(function(c){return c+':'+carpetas[c]}).join(',')+' paquetes='+(Android.mcInfo?Android.mcInfo():'')}catch(e){return'error '+e.message}}
 function mcStep(b){var st=mcStatus();
  if(st==='no_app')return'';
  if(st==='no_mc')return'<p style="margin:10px 0 6px"><small>Mobs de Minecraft: instala Minecraft en este teléfono para verlos aquí.</small></p>';

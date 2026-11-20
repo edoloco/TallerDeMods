@@ -123,7 +123,7 @@ public class MainActivity extends Activity {
             if (!"ok".equals(mcIndexar())) return "[]";
             JSONArray a = new JSONArray();
             List<String> l = new ArrayList<>();
-            for (String k : mcIdx.keySet()) if (k.startsWith(prefijo)) l.add(k);
+            for (String k : mc.idx.keySet()) if (k.startsWith(prefijo)) l.add(k);
             Collections.sort(l);
             for (String k : l) a.put(k);
             return a.toString();
@@ -133,7 +133,7 @@ public class MainActivity extends Activity {
         @JavascriptInterface
         public String mcInfo() {
             mcIndexar();
-            return mcResumen.toString();
+            return mc == null ? "" : mc.resumen.toString();
         }
 
         @JavascriptInterface
@@ -232,24 +232,8 @@ public class MainActivity extends Activity {
 
     // ---------- Minecraft instalado ----------
 
-    private Map<String, String[]> mcIdx = null;
-    private final StringBuilder mcResumen = new StringBuilder();
+    private McIndice mc = null;
     private String mcEstado = null;
-    private final Map<String, ZipFile> zips = new HashMap<>();
-
-    /** Orden de los paquetes: "vanilla" primero y luego "vanilla_1.x.y" de menor a mayor (el más nuevo gana). */
-    private static long rangoPaquete(String pack) {
-        if (pack.equals("vanilla")) return 0;
-        String[] p = pack.replaceAll("[^0-9.]", "").split("\\.");
-        long r = 0;
-        for (int i = 0; i < 4; i++) {
-            r *= 1000;
-            if (i < p.length && !p[i].isEmpty()) {
-                try { r += Math.min(999, Long.parseLong(p[i])); } catch (Exception ignorar) { }
-            }
-        }
-        return r + 1;
-    }
 
     private synchronized String mcIndexar() {
         if (mcEstado != null) return mcEstado;
@@ -262,80 +246,16 @@ public class MainActivity extends Activity {
         List<String> apks = new ArrayList<>();
         apks.add(ai.sourceDir);
         if (ai.splitSourceDirs != null) Collections.addAll(apks, ai.splitSourceDirs);
-        Map<String, String[]> idx = new HashMap<>();
-        Map<String, Long> rango = new HashMap<>();
-        StringBuilder vistos = new StringBuilder();
-        StringBuilder empaquetados = new StringBuilder();
-        String clave = "resource_packs/";
-        Map<String, Integer> conteo = new HashMap<>();
-        for (String apk : apks) {
-            try {
-                ZipFile z = new ZipFile(apk);
-                zips.put(apk, z);
-                Enumeration<? extends ZipEntry> en = z.entries();
-                while (en.hasMoreElements()) {
-                    ZipEntry e = en.nextElement();
-                    String n = e.getName();
-                    if (e.isDirectory()) continue;
-                    // Los paquetes pueden estar en assets/resource_packs/ o en assets/assets/resource_packs/ (según la versión)
-                    int k = n.indexOf(clave);
-                    if (k < 0) {
-                        if (n.startsWith("assets/")) {
-                            String[] partes = n.split("/");
-                            if (partes.length > 2) {
-                                String d = partes[0] + "/" + partes[1] + "/" + (partes.length > 3 ? partes[2] : "");
-                                if (vistos.length() < 400 && vistos.indexOf(d + " ") < 0) vistos.append(d).append(' ');
-                            }
-                            String nl = n.toLowerCase();
-                            if ((nl.endsWith(".zip") || nl.endsWith(".pak") || nl.endsWith(".mcpack") || nl.endsWith(".obb")) && empaquetados.length() < 300)
-                                empaquetados.append(n).append(' ');
-                        }
-                        continue;
-                    }
-                    String resto = n.substring(k + clave.length());
-                    int s = resto.indexOf('/');
-                    if (s < 0) continue;
-                    String pack = resto.substring(0, s);
-                    String pref = n.substring(0, k);
-                    Integer cnt = conteo.get(pref + "|" + pack);
-                    conteo.put(pref + "|" + pack, cnt == null ? 1 : cnt + 1);
-                    if (!pack.startsWith("vanilla") || pack.contains("music")) continue;
-                    String rel = resto.substring(s + 1);
-                    long r = rangoPaquete(pack);
-                    Long viejo = rango.get(rel);
-                    if (viejo == null || viejo <= r) {
-                        idx.put(rel, new String[]{apk, n});
-                        rango.put(rel, r);
-                    }
-                }
-            } catch (Exception ignorar) { }
-        }
-        List<String> claves = new ArrayList<>(conteo.keySet());
-        Collections.sort(claves);
-        for (String c : claves) if (mcResumen.length() < 600) mcResumen.append(c).append('=').append(conteo.get(c)).append(' ');
-        if (idx.isEmpty()) return mcEstado = "no_assets:" + vistos.toString().trim()
-                + (empaquetados.length() > 0 ? " | archivos: " + empaquetados.toString().trim() : "")
-                + " | apks: " + apks.size();
-        mcIdx = idx;
+        McIndice m = new McIndice();
+        m.indexar(apks);
+        mc = m;
+        if (m.idx.isEmpty()) return mcEstado = "no_assets:" + m.detalle + " | apks: " + apks.size();
         return mcEstado = "ok";
     }
 
     private byte[] mcLeer(String rel) {
         if (!"ok".equals(mcIndexar())) return null;
-        String[] r = mcIdx.get(rel);
-        if (r == null) return null;
-        try {
-            ZipFile z = zips.get(r[0]);
-            InputStream in = z.getInputStream(z.getEntry(r[1]));
-            ByteArrayOutputStream out = new ByteArrayOutputStream();
-            byte[] buf = new byte[16384];
-            int n;
-            while ((n = in.read(buf)) > 0) out.write(buf, 0, n);
-            in.close();
-            return out.toByteArray();
-        } catch (Exception e) {
-            return null;
-        }
+        return mc.leer(rel);
     }
 
     // ---------- Actualizaciones ----------

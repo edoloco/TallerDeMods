@@ -257,7 +257,8 @@ public class MainActivity extends Activity {
         Map<String, String[]> idx = new HashMap<>();
         Map<String, Long> rango = new HashMap<>();
         StringBuilder vistos = new StringBuilder();
-        String base = "assets/resource_packs/";
+        StringBuilder empaquetados = new StringBuilder();
+        String clave = "resource_packs/";
         for (String apk : apks) {
             try {
                 ZipFile z = new ZipFile(apk);
@@ -267,14 +268,22 @@ public class MainActivity extends Activity {
                     ZipEntry e = en.nextElement();
                     String n = e.getName();
                     if (e.isDirectory()) continue;
-                    if (!n.startsWith(base)) {
-                        if (vistos.length() < 300 && n.startsWith("assets/") && n.indexOf('/', 7) > 0) {
-                            String d = n.substring(0, n.indexOf('/', 7));
-                            if (vistos.indexOf(d) < 0) vistos.append(d).append(' ');
+                    // Los paquetes pueden estar en assets/resource_packs/ o en assets/assets/resource_packs/ (según la versión)
+                    int k = n.indexOf(clave);
+                    if (k < 0) {
+                        if (n.startsWith("assets/")) {
+                            String[] partes = n.split("/");
+                            if (partes.length > 2) {
+                                String d = partes[0] + "/" + partes[1] + "/" + (partes.length > 3 ? partes[2] : "");
+                                if (vistos.length() < 400 && vistos.indexOf(d + " ") < 0) vistos.append(d).append(' ');
+                            }
+                            String nl = n.toLowerCase();
+                            if ((nl.endsWith(".zip") || nl.endsWith(".pak") || nl.endsWith(".mcpack") || nl.endsWith(".obb")) && empaquetados.length() < 300)
+                                empaquetados.append(n).append(' ');
                         }
                         continue;
                     }
-                    String resto = n.substring(base.length());
+                    String resto = n.substring(k + clave.length());
                     int s = resto.indexOf('/');
                     if (s < 0) continue;
                     String pack = resto.substring(0, s);
@@ -289,7 +298,9 @@ public class MainActivity extends Activity {
                 }
             } catch (Exception ignorar) { }
         }
-        if (idx.isEmpty()) return mcEstado = "no_assets:" + vistos.toString().trim();
+        if (idx.isEmpty()) return mcEstado = "no_assets:" + vistos.toString().trim()
+                + (empaquetados.length() > 0 ? " | archivos: " + empaquetados.toString().trim() : "")
+                + " | apks: " + apks.size();
         mcIdx = idx;
         return mcEstado = "ok";
     }

@@ -49,6 +49,17 @@ GitHub Actions compila, crea el Release con `TallerDeMods.apk` y el mensaje del 
 
 Al crear un **bloque** u **objeto** aparece "🎨 Dibújalo tú": un lienzo de 16×16 con lápiz, rellenar, borrar, copiar color, espejo, deshacer y paleta. El dibujo se usa como textura en Minecraft. En "Mi addon" el botón ✏️ permite cambiar cualquier cosa ya creada.
 
+## Comportamientos de las criaturas
+
+En la criatura, paso 6, "🧠 Personalizar comportamientos" abre un editor tipo MCreator: una lista ordenada donde **lo de más arriba es más importante**. Se puede agregar, quitar, subir y bajar cada comportamiento, y elegir sus opciones. Al abrirlo por primera vez se arma con lo que ya tenía la criatura (malvada, se defiende o amigable).
+
+- 🚶 **Moverse:** pasear, mirar a los jugadores, seguir a quien lleva un objeto, huir de los jugadores, huir de otra criatura, asustarse al recibir daño, volar, teletransportarse, quedarse quieto.
+- ⚔️ **Pelear:** atacar a los jugadores, atacar a otra criatura (incluidas las tuyas), defenderse, disparar (fuego, calaveras, nieve, flechas), explotar al acercarse.
+- 🤝 **Amistoso:** se puede domesticar (deja de atacarte, te sigue, te defiende y se sienta), se puede montar, tener bebés, curarse comiendo.
+- 🧬 **Cuerpo:** se quema con el sol, respira bajo el agua, no le duelen las caídas.
+
+Los objetos que crea el niño también aparecen en las listas de objetos (para domesticar, tentar, etc.). "Volver a lo básico" quita la lista y vuelve a los tres modos simples.
+
 ## Pintar criaturas
 
 En la criatura, "🎨 Píntala tú": se elige parte (cabeza, cuerpo, brazos, piernas) y cara (frente, espalda, lados, arriba) y se pinta pixel por pixel, con vista previa de frente y espalda. Al pintarla, la criatura usa forma de persona (modelo de zombi), con el tamaño, fuerza y poderes elegidos.

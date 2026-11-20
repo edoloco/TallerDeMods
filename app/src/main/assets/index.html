@@ -115,8 +115,8 @@ mob:function(){return head('🐲 Criatura')
  +step('3. ¿Qué tan grande?',opts('mob.size',[['peq','🐜','Pequeño'],['normal','🙂','Normal'],['grande','🦣','Grande'],['gigante','🌋','Gigante']]))
  +step('4. ¿Qué tan fuerte?',opts('mob.str',[['suave','🪶','Suave'],['normal','💪','Normal'],['fuerte','🦾','Fuerte'],['jefe','👑','Jefe']]))
  +step('5. ¿Qué tan rápido?',opts('mob.spd',[['lento','🐌','Lento'],['normal','🚶','Normal'],['rapido','⚡','Rápido']]))
- +step('6. ¿Cómo se porta?',opts('mob.mode',[['hostil','😈','Malvado: te ataca'],['neutral','😠','Se defiende'],['pasivo','😊','Amigable: huye']]))
- +step('7. Poderes (hasta 4)',opts('mob.pw',PW,1,4))
+ +aiStep()
+ +step('7. Poderes (hasta 4)',(S.mob.ai?'<p style="margin:0 0 6px"><small>Con comportamientos personalizados, para disparar usa el comportamiento 🏹 Disparar.</small></p>':'')+opts('mob.pw',S.mob.ai?PW.filter(function(o){return['bolafuego','calavera','nieve'].indexOf(o[0])<0}):PW,1,4))
  +step('8. ¿Cómo aparece?','<p><small>Siempre podrás invocarlo con un comando.</small></p>'+opts('mob.egg',[['1','🥚','Con huevo'],['0','🚫','Sin huevo']])+'<p><b>¿Aparece solo en el mundo?</b></p>'+opts('mob.wild',WILD)+(S.mob.wild?'<p><b>¿Cuántos?</b></p>'+opts('mob.freq',[['raro','🍀','Pocos'],['normal','🙂','Normal'],['mucho','🎉','Muchos']]):''))
  +shapeChoice('mob')+(S.mob.shape&&shapeById(S.mob.shape)?'':skinStep())+step('9. Colores del huevo','<div class="half"><input type="color" data-i="mob.c1" value="'+S.mob.c1+'"><input type="color" data-i="mob.c2" value="'+S.mob.c2+'"></div>')
  +step('10. ¿Qué suelta al morir? (hasta 3)',opts('mob.loot',LOOT,1,3))
@@ -205,24 +205,28 @@ function mobParams(m){var h=function(x){return m.pw.indexOf(x)>=0},st={suave:[10
  return{id:m.id,name:m.name,base:m.base==='wither_storm'?'wither':m.base,hp:st[0],dmg:st[1],scale:{peq:.5,normal:1,grande:3,gigante:6}[m.size],speed:{lento:.15,normal:.25,rapido:.4}[m.spd],mode:m.mode,
   atkfx:h('wither')?'wither':h('veneno')?'poison':'',fxdur:10,aura:h('aura')?'slowness':'',ranged:h('bolafuego')?'minecraft:small_fireball':h('calavera')?'minecraft:wither_skull':h('nieve')?'minecraft:snowball':'',
   range:32,fire:h('fuego'),boss:h('jefe'),kb:h('roca'),doors:h('puertas'),climb:h('trepar'),loot:m.loot.length?m.id+'_botin':''}}
-function mobEnt(m,egg){var full=NS+':'+m.id,c={
+function mobEnt(m,egg,ai){var full=NS+':'+m.id,c={
  'minecraft:type_family':{family:[m.id,'monster']},'minecraft:health':{value:m.hp,max:m.hp},'minecraft:scale':{value:m.scale},
  'minecraft:collision_box':{width:0.6,height:1.9},'minecraft:movement':{value:m.speed},
  'minecraft:navigation.walk':{can_path_over_water:true,can_break_doors:!!m.doors,avoid_water:false},'minecraft:movement.basic':{},'minecraft:jump.static':{},
  'minecraft:follow_range':{value:m.range},'minecraft:physics':{},'minecraft:behavior.float':{priority:0},
  'minecraft:behavior.random_stroll':{priority:6,speed_multiplier:1},'minecraft:behavior.look_at_player':{priority:7,look_distance:12},'minecraft:behavior.random_look_around':{priority:8}};
  if(m.climb)c['minecraft:can_climb']={};
- if(m.mode!=='pasivo'){var at={damage:m.dmg};if(m.atkfx){at.effect_name=m.atkfx;at.effect_duration=m.fxdur}c['minecraft:attack']=at;c['minecraft:behavior.melee_attack']={priority:3,speed_multiplier:1.2,track_target:true};
+ var AIX=null;if(ai){AIX=aiBuild(m,ai,c)}
+ if(!ai&&m.mode!=='pasivo'){var at={damage:m.dmg};if(m.atkfx){at.effect_name=m.atkfx;at.effect_duration=m.fxdur}c['minecraft:attack']=at;c['minecraft:behavior.melee_attack']={priority:3,speed_multiplier:1.2,track_target:true};
   if(m.ranged){c['minecraft:shooter']={def:m.ranged};c['minecraft:behavior.ranged_attack']={priority:2,attack_interval_min:1,attack_interval_max:3,attack_radius:20}}}
- if(m.mode==='hostil')c['minecraft:behavior.nearest_attackable_target']={priority:2,entity_types:[{filters:{test:'is_family',subject:'other',value:'player'},max_dist:m.range}]};
- if(m.mode==='neutral')c['minecraft:behavior.hurt_by_target']={priority:1};
- if(m.mode==='pasivo')c['minecraft:behavior.panic']={priority:1,speed_multiplier:1.3};
+ if(!ai&&m.mode==='hostil')c['minecraft:behavior.nearest_attackable_target']={priority:2,entity_types:[{filters:{test:'is_family',subject:'other',value:'player'},max_dist:m.range}]};
+ if(!ai&&m.mode==='neutral')c['minecraft:behavior.hurt_by_target']={priority:1};
+ if(!ai&&m.mode==='pasivo')c['minecraft:behavior.panic']={priority:1,speed_multiplier:1.3};
  if(m.aura)c['minecraft:mob_effect']={effect_range:8,mob_effect:m.aura,effect_time:5,entity_filter:{any_of:[{test:'is_family',subject:'other',value:'player'}]}};
  if(m.boss)c['minecraft:boss']={hud_range:55,name:m.name,should_darken_sky:false};
  if(m.kb)c['minecraft:knockback_resistance']={value:1};
  if(m.fire)c['minecraft:fire_immune']=true;
  if(m.loot)c['minecraft:loot']={table:'loot_tables/'+NS+'/'+m.loot+'.json'};
- return{format_version:'1.16.0','minecraft:entity':{description:{identifier:full,is_spawnable:egg,is_summonable:true,is_experimental:false},components:c}}}
+ Object.keys(c).forEach(function(k){if(c[k]===undefined)delete c[k]});
+ var ent={description:{identifier:full,is_spawnable:egg,is_summonable:true,is_experimental:false},components:c};
+ if(AIX&&Object.keys(AIX.G).length)ent.component_groups=AIX.G;if(AIX&&Object.keys(AIX.E).length)ent.events=AIX.E;
+ return{format_version:'1.16.0','minecraft:entity':ent}}
 function spawnRule(id,w,freq,pop){var c={'minecraft:spawns_on_surface':{},'minecraft:weight':{default:{raro:5,normal:30,mucho:80}[freq]},'minecraft:herd':{min_size:1,max_size:2},
   'minecraft:biome_filter':{test:'has_biome_tag',operator:'==',value:{noche:'overworld',dia:'overworld',desierto:'desert',nieve:'frozen',nether:'nether',end:'the_end'}[w]}};
  if(w==='noche')c['minecraft:brightness_filter']={min:0,max:7,adjust_for_weather:false};
@@ -319,7 +323,7 @@ async function build(){USED={};
   d.identifier=full;d.spawn_egg={base_color:o.c1.toUpperCase(),overlay_color:o.c2.toUpperCase()};if(o.skin){d=humanoidClient('textures/entity/'+NS+'_'+m.id);d.identifier=full;d.spawn_egg={base_color:o.c1.toUpperCase(),overlay_color:o.c2.toUpperCase()};rp.file('textures/entity/'+NS+'_'+m.id+'.png',o.skin,{base64:true})}
   var shm=o.shape&&shapeById(o.shape);
   if(shm){useShape(shm);d={identifier:full,materials:{default:'entity_alphatest'},textures:{default:'textures/entity/shape_'+shm.id},geometry:{default:'geometry.'+NS+'_shape_'+shm.id},render_controllers:['controller.render.default'],spawn_egg:{base_color:o.c1.toUpperCase(),overlay_color:o.c2.toUpperCase()}}}
-  bp.file('entities/'+m.id+'.json',JSON.stringify(mobEnt(m,o.egg!=='0'),null,2));
+  bp.file('entities/'+m.id+'.json',JSON.stringify(mobEnt(m,o.egg!=='0',o.ai&&o.ai.length?o.ai:(o.ai?[]:null)),null,2));
   rp.file('entity/'+m.id+'.entity.json',JSON.stringify({format_version:(o.skin||shm)?'1.10.0':b.v,'minecraft:client_entity':{description:d}},null,2));
   if(o.wild)bp.file('spawn_rules/'+m.id+'.json',JSON.stringify(spawnRule(m.id,o.wild,o.freq,o.mode==='pasivo'?'animal':'monster'),null,2));
   if(m.loot)bp.file('loot_tables/'+NS+'/'+m.loot+'.json',JSON.stringify({pools:[{rolls:1,entries:o.loot.map(function(i){return{type:'item',name:'minecraft:'+i,weight:1,functions:[{function:'set_count',count:{min:1,max:3}}]}})}]},null,2));
@@ -708,6 +712,117 @@ function mcStep(b){var st=mcStatus();
  var V=SH.allmc?L:L.slice(0,15);
  return'<p style="margin:10px 0 6px"><small>Mobs de Minecraft (los lee de tu juego):</small></p><div class="grid">'+V.map(function(m){return b('data-xmc="'+L.indexOf(m)+'"','🐾',esc(m.n),0)}).join('')+'</div>'
   +(L.length>15?'<button class="back" data-xallmc="1">'+(SH.allmc?'Ver menos':'➕ Ver todos los mobs ('+L.length+')')+'</button>':'')}
+// ---------- Comportamientos de criaturas (tipo MCreator: lista ordenada por importancia) ----------
+var AI_SPD=[['lento','🐌','Lento'],['normal','🚶','Normal'],['rapido','⚡','Rápido']],AI_DST=[['cerca','👣','Cerca'],['medio','👀','Medio'],['lejos','🔭','Lejos']];
+var AI_ITEMS=[['wheat','🌾','Trigo'],['carrot','🥕','Zanahoria'],['bone','🦴','Hueso'],['cod','🐟','Pescado'],['apple','🍎','Manzana'],['beef','🥩','Carne'],['diamond','💎','Diamante'],['golden_apple','🍏','Manzana dorada']];
+var AI_TGT=[['monster','👾','Monstruos'],['zombie','🧟','Zombis'],['skeleton','💀','Esqueletos'],['creeper','💚','Creepers'],['spider','🕷️','Arañas'],['cow','🐄','Vacas'],['pig','🐖','Cerdos'],['chicken','🐔','Gallinas'],['sheep','🐑','Ovejas'],['villager','🧑‍🌾','Aldeanos']];
+var AI_PROJ=[['minecraft:small_fireball','☄️','Bola de fuego'],['minecraft:wither_skull','💀','Calavera'],['minecraft:snowball','❄️','Bola de nieve'],['minecraft:arrow','🏹','Flecha']];
+var AI_POW=[['poco','💨','Pequeña'],['medio','💥','Normal'],['mucho','☢️','Enorme']];
+function aiItems(){return AI_ITEMS.concat(P.items.map(function(o){return[NS+':'+o.id,'⭐',esc(o.name)]}))}
+function aiTargets(){return AI_TGT.concat(P.mobs.filter(function(o){return o.id!==S.mob.id}).map(function(o){return[o.id,'🐲',esc(o.name)]}))}
+var AI_CAT={
+ pasear:{g:'mov',e:'🚶',n:'Pasear',d:'Camina por ahí sin rumbo.',p:{speed:[AI_SPD,'normal']}},
+ mirar:{g:'mov',e:'👀',n:'Mirar a los jugadores',d:'Se queda mirando a quien está cerca.'},
+ seguir_objeto:{g:'mov',e:'🥕',n:'Seguir a quien lleva…',d:'Te sigue si tienes ese objeto en la mano.',p:{item:[aiItems,'wheat'],speed:[AI_SPD,'normal']}},
+ huir_jugador:{g:'mov',e:'🏃',n:'Huir de los jugadores',d:'Escapa cuando te acercas.',p:{dist:[AI_DST,'medio'],speed:[AI_SPD,'rapido']}},
+ huir_de:{g:'mov',e:'😱',n:'Huir de…',d:'Escapa de otra criatura.',p:{target:[aiTargets,'creeper'],dist:[AI_DST,'medio']}},
+ asustarse:{g:'mov',e:'😨',n:'Asustarse al recibir daño',d:'Corre en cualquier dirección si lo golpean.'},
+ volar:{g:'mov',e:'🕊️',n:'Volar',d:'Flota y vuela en vez de caminar.'},
+ teleport:{g:'mov',e:'🌀',n:'Teletransportarse',d:'Aparece en otro lugar de repente, como el Enderman.',p:{freq:[[['poco','🙂','A veces'],['mucho','🌀','Seguido']],'poco']}},
+ quieto:{g:'mov',e:'🗿',n:'Quedarse quieto',d:'No se mueve de su lugar (como una estatua).'},
+ atacar_jugadores:{g:'pel',e:'😈',n:'Atacar a los jugadores',d:'Te busca y te ataca.',p:{dist:[AI_DST,'medio']}},
+ atacar_a:{g:'pel',e:'⚔️',n:'Atacar a…',d:'Ataca a otra criatura.',p:{target:[aiTargets,'zombie'],dist:[AI_DST,'medio']}},
+ defenderse:{g:'pel',e:'🛡️',n:'Defenderse',d:'Si lo golpean, ataca de vuelta.'},
+ disparar:{g:'pel',e:'🏹',n:'Disparar',d:'Lanza cosas a lo que ataca.',p:{proj:[AI_PROJ,'minecraft:small_fireball'],speed:[AI_SPD,'normal']}},
+ explotar:{g:'pel',e:'💥',n:'Explotar al acercarse',d:'Como un creeper: se acerca y explota.',p:{power:[AI_POW,'medio']}},
+ domesticable:{g:'ami',e:'🦴',n:'Se puede domesticar',d:'Dale ese objeto y será tu mascota: te sigue y te defiende.',p:{item:[aiItems,'bone']}},
+ montable:{g:'ami',e:'🐎',n:'Se puede montar',d:'Súbete y manéjalo.'},
+ reproducirse:{g:'ami',e:'💕',n:'Tener bebés',d:'Dale ese objeto a dos y nace un bebé.',p:{item:[aiItems,'wheat']}},
+ curarse:{g:'ami',e:'💖',n:'Curarse comiendo',d:'Si le das ese objeto, recupera vida.',p:{item:[aiItems,'apple']}},
+ quema_sol:{g:'cue',e:'☀️',n:'Se quema con el sol',d:'Como los zombis y esqueletos.'},
+ respira_agua:{g:'cue',e:'🐠',n:'Respira bajo el agua',d:'No se ahoga.'},
+ sin_caida:{g:'cue',e:'🪂',n:'No le duelen las caídas',d:'Puede caer de alto sin dañarse.'}};
+var AI_GROUPS=[['mov','🚶 Moverse'],['pel','⚔️ Pelear'],['ami','🤝 Amistoso'],['cue','🧬 Cuerpo']];
+function aiNew(t){var c=AI_CAT[t],a={t:t};Object.keys(c.p||{}).forEach(function(k){a[k]=c.p[k][1]});return a}
+function aiFromMode(m){var L=[];if(m.mode==='hostil')L.push(aiNew('atacar_jugadores'));if(m.mode==='neutral')L.push(aiNew('defenderse'));if(m.mode==='pasivo')L.push(aiNew('asustarse'));
+ var pr=m.pw.indexOf('bolafuego')>=0?'minecraft:small_fireball':m.pw.indexOf('calavera')>=0?'minecraft:wither_skull':m.pw.indexOf('nieve')>=0?'minecraft:snowball':'';
+ if(pr&&m.mode!=='pasivo'){var d=aiNew('disparar');d.proj=pr;L.push(d)}L.push(aiNew('pasear'));L.push(aiNew('mirar'));return L}
+function aiLabel(a){var c=AI_CAT[a.t];if(!c)return'';var x=c.e+' '+c.n;
+ if(a.item){var it=aiItems().filter(function(o){return o[0]===a.item})[0];if(it)x=x.replace('…',' '+it[2].toLowerCase())}
+ if(a.target){var tg=aiTargets().filter(function(o){return o[0]===a.target})[0];if(tg)x=x.replace('…',' '+tg[2].toLowerCase())}return x}
+VIEW.ai=function(){var L=S.mob.ai||[],b=function(a,e,t,on){return'<button type="button" class="opt'+(on?' on':'')+'" '+a+'><span class="e">'+e+'</span>'+t+'</button>'};
+ var cards=L.map(function(a,i){var c=AI_CAT[a.t];if(!c)return'';var ps=Object.keys(c.p||{}).map(function(k){var list=c.p[k][0];if(typeof list==='function')list=list();
+   return'<div class="grid" style="margin-top:6px">'+list.map(function(o){return b('data-aip="'+i+':'+k+'" data-v="'+esc(o[0])+'"',o[1],o[2],a[k]===o[0])}).join('')+'</div>'}).join('');
+  return'<div class="card"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><h2 style="margin:0">'+(i+1)+'. '+c.e+' '+c.n+'</h2><span style="display:flex;gap:4px;flex:none">'
+   +'<button class="del" data-aiu="'+i+'" aria-label="Subir">⬆️</button><button class="del" data-aid="'+i+'" aria-label="Bajar">⬇️</button><button class="del" data-aix="'+i+'" aria-label="Quitar">🗑️</button></span></div><p style="margin:4px 0 0"><small>'+c.d+'</small></p>'+ps+'</div>'}).join('');
+ var add=S.aiAdd?step('➕ ¿Qué comportamiento agregas?',AI_GROUPS.map(function(g){return'<p style="margin:10px 0 6px"><b>'+g[1]+'</b></p><div class="grid">'+Object.keys(AI_CAT).filter(function(k){return AI_CAT[k].g===g[0]}).map(function(k){var used=L.some(function(a){return a.t===k})&&!AI_CAT[k].p;return used?'':b('data-aia="'+k+'"',AI_CAT[k].e,AI_CAT[k].n,0)}).join('')+'</div>'}).join('')+'<button class="back" data-aiadd="0">Cancelar</button>'):btn('blue','➕ Agregar comportamiento','data-aiadd="1"');
+ return'<div class="top"><button class="back" data-go="mob">⬅️</button><h1>🧠 Comportamientos</h1></div>'
+  +'<div class="card"><p style="margin:0">Así piensa <b>'+esc(S.mob.name||'tu criatura')+'</b>. Los de <b>más arriba</b> son más importantes: si puede hacer dos cosas, elige la de arriba.</p></div>'
+  +(cards||'<div class="card"><p>No tiene comportamientos: se quedará parada. ¡Agrega alguno!</p></div>')+add
+  +btn('','✅ Listo','data-go="mob"')+'<button class="back" data-aireset="1">↺ Volver a lo básico (sin lista)</button>'};
+function aiStep(){var m=S.mob;
+ if(m.ai)return step('6. 🧠 ¿Cómo se porta?','<div>'+(m.ai.length?m.ai.map(function(a,i){return'<div>'+(i+1)+'. '+aiLabel(a)+'</div>'}).join(''):'<p>Sin comportamientos.</p>')+'</div>'+btn('pur','🧠 Editar comportamientos','data-go="ai"'));
+ return step('6. ¿Cómo se porta?',opts('mob.mode',[['hostil','😈','Malvado: te ataca'],['neutral','😠','Se defiende'],['pasivo','😊','Amigable: huye']])
+  +btn('pur','🧠 Personalizar comportamientos','data-aistart="1"')+'<p style="margin:4px 0 0"><small>Elige paso a paso qué hace: volar, seguirte, ser mascota, explotar…</small></p>')}
+document.addEventListener('click',function(e){var t=e.target.closest('button');if(!t)return;var d=t.dataset,L=S.mob.ai;
+ if(d.aistart){S.mob.ai=aiFromMode(S.mob);S.aiAdd=false;return go('ai')}
+ if(d.aireset){delete S.mob.ai;return go('mob')}
+ if(d.aiadd){S.aiAdd=d.aiadd==='1';return render()}
+ if(d.aia){L.push(aiNew(d.aia));S.aiAdd=false;toast(AI_CAT[d.aia].e+' Agregado: '+AI_CAT[d.aia].n);return}
+ if(d.aip){var q=d.aip.split(':');L[+q[0]][q[1]]=d.v;return render()}
+ if(d.aiu){var i=+d.aiu;if(i>0){var x=L[i];L[i]=L[i-1];L[i-1]=x}return render()}
+ if(d.aid){i=+d.aid;if(i<L.length-1){x=L[i];L[i]=L[i+1];L[i+1]=x}return render()}
+ if(d.aix){L.splice(+d.aix,1);return render()}});
+// --- generar componentes de Minecraft desde la lista ---
+function aiItemId(v){return v.indexOf(':')>=0?v:'minecraft:'+v}
+function aiBuild(m,ai,c){var G={},E={},spawn=[],SPD={lento:0.8,normal:1,rapido:1.4},DST={cerca:6,medio:12,lejos:24},tg=[],tgP=0,fight=false,attacksPlayer=false,tame=null,full=NS+':'+m.id;
+ function fam(v){return{test:'is_family',subject:'other',value:v}}
+ function filt(v){return v==='monster'?{all_of:[fam('monster'),{test:'is_family',subject:'other',operator:'!=',value:m.id}]}:fam(v)}
+ function avoid(p,f,dist,spd){var a=c['minecraft:behavior.avoid_mob_type']||(c['minecraft:behavior.avoid_mob_type']={priority:p,entity_types:[]});a.entity_types.push({filters:f,max_dist:dist,walk_speed_multiplier:1,sprint_speed_multiplier:spd})}
+ delete c['minecraft:behavior.random_stroll'];delete c['minecraft:behavior.look_at_player'];delete c['minecraft:behavior.random_look_around'];
+ ai.forEach(function(a,i){var p=i+1;switch(a.t){
+  case 'pasear':c['minecraft:behavior.random_stroll']={priority:p,speed_multiplier:SPD[a.speed]||1};break;
+  case 'mirar':c['minecraft:behavior.look_at_player']={priority:p,look_distance:12,probability:0.5};c['minecraft:behavior.random_look_around']={priority:p+0.5};break;
+  case 'seguir_objeto':c['minecraft:behavior.tempt']={priority:p,speed_multiplier:SPD[a.speed]||1,within_radius:16,items:[aiItemId(a.item)]};break;
+  case 'huir_jugador':avoid(p,fam('player'),DST[a.dist]||12,SPD[a.speed]||1.4);break;
+  case 'huir_de':avoid(p,fam(a.target),DST[a.dist]||12,1.4);break;
+  case 'asustarse':c['minecraft:behavior.panic']={priority:p,speed_multiplier:1.3};break;
+  case 'volar':delete c['minecraft:navigation.walk'];delete c['minecraft:movement.basic'];delete c['minecraft:jump.static'];
+   c['minecraft:navigation.hover']={can_path_over_water:true,can_sink:false,can_pass_doors:false,can_path_from_air:true,avoid_water:true,avoid_damage_blocks:true,avoid_sun:false};
+   c['minecraft:movement.hover']={};c['minecraft:flying_speed']={value:0.15};c['minecraft:can_fly']={};c['minecraft:physics']={has_gravity:false};
+   c['minecraft:behavior.random_hover']={priority:p,xz_dist:8,y_dist:6,y_offset:-1,interval:1,hover_height:[1,5]};break;
+  case 'teleport':c['minecraft:teleport']={random_teleports:true,max_random_teleport_time:a.freq==='mucho'?8:30,random_teleport_cube:[16,16,16],target_distance:16,target_teleport_chance:0.05,light_teleport_chance:0};break;
+  case 'quieto':c['minecraft:movement']={value:0};break;
+  case 'atacar_jugadores':tg.push({filters:fam('player'),max_dist:DST[a.dist]||12,pl:1});tgP=tgP||p;attacksPlayer=true;fight=true;break;
+  case 'atacar_a':tg.push({filters:filt(a.target),max_dist:DST[a.dist]||12});tgP=tgP||p;fight=true;break;
+  case 'defenderse':c['minecraft:behavior.hurt_by_target']={priority:p};fight=true;break;
+  case 'disparar':c['minecraft:shooter']={def:a.proj};var iv={lento:[3,5],normal:[1,3],rapido:[0.5,1]}[a.speed]||[1,3];
+   c['minecraft:behavior.ranged_attack']={priority:p,attack_interval_min:iv[0],attack_interval_max:iv[1],attack_radius:20};fight=true;break;
+  case 'explotar':G['taller:explota']={'minecraft:explode':{fuse_length:1.5,fuse_lit:true,power:{poco:2,medio:3,mucho:6}[a.power]||3,causes_fire:false}};
+   E['taller:explotar']={add:{component_groups:['taller:explota']}};
+   c['minecraft:target_nearby_sensor']={inside_range:2.5,outside_range:6,must_see:true,on_inside_range:{event:'taller:explotar',target:'self'}};break;
+  case 'domesticable':tame=a;c['minecraft:tameable']={probability:0.33,tame_items:aiItemId(a.item),tame_event:{event:'taller:domesticar',target:'self'}};
+   G['taller:domesticado']={'minecraft:is_tamed':{},'minecraft:behavior.follow_owner':{priority:p,speed_multiplier:1.1,start_distance:10,stop_distance:2},
+    'minecraft:behavior.owner_hurt_by_target':{priority:1},'minecraft:behavior.owner_hurt_target':{priority:2},'minecraft:sittable':{},'minecraft:behavior.stay_while_sitting':{priority:0}};
+   E['taller:domesticar']={remove:{component_groups:['taller:salvaje']},add:{component_groups:['taller:domesticado']}};fight=true;break;
+  case 'montable':c['minecraft:rideable']={seat_count:1,family_types:['player'],interact_text:'Montar',seats:{position:[0,Math.round((m.scale||1)*1.1*100)/100,0]}};c['minecraft:input_ground_controlled']={};break;
+  case 'reproducirse':c['minecraft:breedable']={require_tame:false,breed_items:[aiItemId(a.item)],breeds_with:{mate_type:full,baby_type:full,breed_event:{event:'taller:nacer',target:'baby'}}};
+   c['minecraft:behavior.breed']={priority:p,speed_multiplier:1};
+   G['taller:bebe']={'minecraft:is_baby':{},'minecraft:scale':{value:Math.round((m.scale||1)*50)/100},'minecraft:ageable':{duration:1200,feed_items:[aiItemId(a.item)],grow_up:{event:'taller:crecer',target:'self'}}};
+   E['taller:nacer']={add:{component_groups:['taller:bebe']}};E['taller:crecer']={remove:{component_groups:['taller:bebe']}};break;
+  case 'curarse':c['minecraft:healable']={items:[{item:aiItemId(a.item),heal_amount:6}]};break;
+  case 'quema_sol':c['minecraft:burns_in_daylight']={};break;
+  case 'respira_agua':c['minecraft:breathable']={breathes_water:true,breathes_air:true,suffocate_time:0,total_supply:15};break;
+  case 'sin_caida':c['minecraft:damage_sensor']={triggers:[{cause:'fall',deals_damage:false}]};break}});
+ if(tg.length){var mk=function(list){return{priority:tgP,must_see:false,reselect_targets:true,entity_types:list.map(function(x){return{filters:x.filters,max_dist:x.max_dist}})}};
+  if(tame&&attacksPlayer){G['taller:salvaje']={'minecraft:behavior.nearest_attackable_target':mk(tg)};spawn.push('taller:salvaje');var rest=tg.filter(function(x){return!x.pl});if(rest.length)G['taller:domesticado']['minecraft:behavior.nearest_attackable_target']=mk(rest)}
+  else c['minecraft:behavior.nearest_attackable_target']=mk(tg)}
+ if(fight){var at={damage:m.dmg};if(m.atkfx){at.effect_name=m.atkfx;at.effect_duration=m.fxdur}c['minecraft:attack']=at;
+  if(!c['minecraft:behavior.ranged_attack']||tg.length>0)c['minecraft:behavior.melee_attack']={priority:(c['minecraft:behavior.ranged_attack']?c['minecraft:behavior.ranged_attack'].priority+0.5:(tgP||2)),speed_multiplier:1.2,track_target:true}}
+ if(spawn.length)E['minecraft:entity_spawned']={add:{component_groups:spawn}};
+ c['minecraft:type_family']={family:[m.id,attacksPlayer?'monster':'mob','mob'].filter(function(v,i,s){return s.indexOf(v)===i})};
+ return{G:G,E:E}}
+
 var UPD={};
 function updBox(){if(!window.Android||!Android.version)return'';var v='<p style="text-align:center"><small>Versión '+esc(Android.version())+'</small></p>'
  +(UPD.estado==='hay'||UPD.estado==='bajando'?'':btn('alt',UPD.estado==='buscando'?'🔎 Buscando…':'🔄 Buscar actualizaciones','data-check="1"'))
